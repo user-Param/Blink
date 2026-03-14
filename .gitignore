@@ -1,0 +1,43 @@
+# Build directories
+build/
+cmake-build-*/
+*.o
+*.so
+*.a
+*.dylib
+*.exe
+*.out
+*.app
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.local
+*.env
+
+# Logs
+*.log
+logs/
+data/logs/
+
+# Binaries
+datafeed
+advanced-server
+*.dSYM/
+
+# Test files
+test1.cpp
+test2.txt
+test3.cpp
+test3.txt
+test4.cpp
+
+# OS files
+.DS_Store
+Thumbs.db
