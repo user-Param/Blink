@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.10)
+project(broker)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find dependencies
+find_package(Boost REQUIRED COMPONENTS thread)
+find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
+
+# Include directories
+include_directories(include)
+
+# Create library (optional - you can directly create executable)
+add_library(broker STATIC
+    src/adapter/eadapter.cpp
+    src/exchange/exchange1.cpp
+)
+
+# Create executable
+add_executable(eadapter main.cpp)
+
+# Link executable with broker library and dependencies
+target_link_libraries(eadapter
+    broker
+    ${Boost_LIBRARIES}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Threads::Threads
+)
+
+# Also link libraries to broker
+target_link_libraries(broker
+    ${Boost_LIBRARIES}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Threads::Threads
+)

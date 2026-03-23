@@ -1,0 +1,374 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+include/
+  adapter/
+    oadapter.h
+  exchange/
+    base_exchange.h
+src/
+  adapter/
+    oadapter.cpp
+  exchange/
+    exchange1.cpp
+CMakeLists.txt
+main.cpp
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="include/adapter/oadapter.h">
+#ifndef OADAPTER_H
+#define OADAPTER_H
+
+#include <memory>
+#include <string>
+#include <atomic>
+
+class Executor {
+    public:
+        bool connected_;
+        void connect();
+        void disconnect();
+        void sendOrder(const OrderRequest& order);
+};
+
+struct OrderRequest {
+    std::string order_id;
+    std::string symbol;
+    double price;
+    int quantity;
+    std::string side;  
+    std::string type;  
+    uint64_t timestamp;
+};
+
+
+class BaseExchange;
+
+class OAdapter {
+public:
+    OAdapter();
+    ~OAdapter();
+    void onOrderSignal(const OrderRequest& order);
+    void setCallback(const std::string& order_id, const std::string& status, const std::string& message);
+    void run();
+    void stop();
+    void setExchange(const std::string& exchange_id);
+private:
+    void sendOrder(const OrderRequest& order);
+    std::unique_ptr<Executor> exchange_;
+    std::string exchange_id_;
+    std::atomic<bool> running_{false};
+};
+
+#endif
+</file>
+
+<file path="include/exchange/base_exchange.h">
+#ifndef BASE_EXCHANGE_H
+#define BASE_EXCHANGE_H
+
+#include <string>
+#include <functional>
+#include "../adapter/oadapter.h"   // for OrderRequest
+
+// Callback for order responses (from exchange)
+using OrderCallback = std::function<void(const std::string& order_id,
+                                         const std::string& status,
+                                         const std::string& message)>;
+
+class BaseExchange {
+public:
+    virtual ~BaseExchange() = default;
+
+    // Lifecycle
+    virtual void connect() = 0;
+    virtual void disconnect() = 0;
+    virtual bool isConnected() const = 0;
+
+    // Order sending (same interface for all exchanges)
+    virtual void sendOrder(const OrderRequest& order) = 0;
+
+    // For identification (optional)
+    virtual std::string getId() const = 0;
+
+    // Set callback for responses
+    void setCallback(OrderCallback cb) { callback_ = std::move(cb); }
+
+protected:
+    // Helper to notify OAdapter of order status
+    void notifyResponse(const std::string& order_id,
+                        const std::string& status,
+                        const std::string& message) {
+        if (callback_) callback_(order_id, status, message);
+    }
+
+    OrderCallback callback_;
+    bool connected_{false};
+};
+
+#endif
+</file>
+
+<file path="src/adapter/oadapter.cpp">
+#include "adapter/oadapter.h"
+#include "../include/adapter/oadapter.h"
+#include <iostream>
+
+// Forward declare exchange implementations
+class Executor {
+    void connect() { 
+        std::cout << "Binance connected" << std::endl; 
+        connected_ = true; 
+    }
+    void disconnect() { 
+        std::cout << "Binance disconnected" << std::endl; 
+        connected_ = false; 
+    }
+    void sendOrder(const OrderRequest& order) {
+        std::cout << "[Binance] Sending order IMMEDIATELY: " << order.symbol 
+                  << " " << order.side << " " << order.quantity 
+                  << " @ " << order.price << std::endl;
+    }
+    std::string getId() const { return "binance"; }
+    bool isConnected() const { return connected_; }
+};
+
+OAdapter::OAdapter() {}
+
+OAdapter::~OAdapter() {
+    stop();
+}
+
+void OAdapter::setExchange(const std::string& exchange_id) {
+    exchange_id_ = exchange_id;
+    
+    // Create appropriate exchange executor
+    if (exchange_id == "binance") {
+        exchange_ = std::make_unique<Executor>();
+    } else if (exchange_id == "bybit") {
+        exchange_ = std::make_unique<Executor>();
+    } else {
+        std::cerr << "Unknown exchange: " << exchange_id << std::endl;
+        return;
+    }
+    
+    // Set callback for order responses
+    exchange_->setCallback([this](const std::string& order_id, 
+                                   const std::string& status, 
+                                   const std::string& message) {
+        std::cout << "[OAdapter] Order " << order_id 
+                  << " status: " << status 
+                  << " - " << message << std::endl;
+    });
+}
+
+void OAdapter::onOrderSignal(const OrderRequest& order) {
+    std::cout << "[OAdapter] Received order signal from RiskManager" << std::endl;
+    std::cout << "  Symbol: " << order.symbol 
+              << " Side: " << order.side 
+              << " Qty: " << order.quantity 
+              << " Price: " << order.price << std::endl;
+    
+    // SEND DIRECTLY - NO QUEUE, NO THREAD
+    sendOrder(order);
+}
+
+void OAdapter::run() {
+    if (!exchange_) {
+        std::cerr << "No exchange set. Call setExchange() first." << std::endl;
+        return;
+    }
+    
+    // Connect to exchange
+    exchange_->connect();
+    
+    if (!exchange_->isConnected()) {
+        std::cerr << "Failed to connect to exchange: " << exchange_id_ << std::endl;
+        return;
+    }
+    
+    running_ = true;
+    std::cout << "OAdapter running, ready to send orders..." << std::endl;
+}
+
+void OAdapter::stop() {
+    running_ = false;
+    if (exchange_) {
+        exchange_->disconnect();
+    }
+    std::cout << "OAdapter stopped" << std::endl;
+}
+
+void OAdapter::sendOrder(const OrderRequest& order) {
+    if (exchange_ && exchange_->isConnected()) {
+        // DIRECT SEND - NO DELAY
+        exchange_->sendOrder(order);
+    } else {
+        std::cerr << "Cannot send order - exchange not connected" << std::endl;
+    }
+}
+</file>
+
+<file path="src/exchange/exchange1.cpp">
+#include "../include/exchange/base_exchange.h"
+#include <iostream>
+
+class BinanceExchange : public BaseExchange {
+public:
+    void connect() override {
+        std::cout << "[Binance] Connecting..." << std::endl;
+        connected_ = true;
+    }
+
+    void disconnect() override {
+        std::cout << "[Binance] Disconnecting..." << std::endl;
+        connected_ = false;
+    }
+
+    bool isConnected() const override { return connected_; }
+
+    void sendOrder(const OrderRequest& order) override {
+        std::cout << "[Binance] Sending order: " << order.symbol
+                  << " " << order.side << " " << order.quantity
+                  << " @ " << order.price << std::endl;
+
+        // Here you would format the order for Binance's API
+        // and send it via WebSocket/REST.
+
+        // Simulate a response from exchange
+        notifyResponse(order.order_id, "ACCEPTED", "Order accepted by Binance");
+    }
+
+    std::string getId() const override { return "binance"; }
+};
+
+// Factory function (optional, but useful for OAdapter)
+std::unique_ptr<BaseExchange> createBinanceExchange() {
+    return std::make_unique<BinanceExchange>();
+}
+</file>
+
+<file path="CMakeLists.txt">
+cmake_minimum_required(VERSION 3.10)
+project(executor)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Find dependencies
+find_package(Boost REQUIRED COMPONENTS thread)
+find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
+
+# Include directories
+include_directories(include)
+
+# Create executable
+add_executable(executor
+    src/adapter/oadapter.cpp
+    src/exchange/exchange1.cpp
+)
+
+# Link libraries
+target_link_libraries(executor
+    ${Boost_LIBRARIES}
+    OpenSSL::SSL
+    OpenSSL::Crypto
+    Threads::Threads
+)
+</file>
+
+<file path="main.cpp">
+#include "adapter/oadapter.h"
+#include <iostream>
+#include <thread>
+
+int main() {
+    std::cout << "Starting OAdapter..." << std::endl;
+    
+    // Create OAdapter
+    OAdapter oadapter;
+    
+    // Set exchange to use
+    oadapter.setExchange("binance");  // or "bybit"
+    
+    // Start OAdapter
+    oadapter.run();
+    
+    // Simulate orders from RiskManager
+    OrderRequest order1;
+    order1.order_id = "ORD001";
+    order1.symbol = "BTCUSDT";
+    order1.price = 50000.0;
+    order1.quantity = 1;
+    order1.side = "BUY";
+    order1.type = "LIMIT";
+    
+    OrderRequest order2;
+    order2.order_id = "ORD002";
+    order2.symbol = "ETHUSDT";
+    order2.price = 3000.0;
+    order2.quantity = 10;
+    order2.side = "SELL";
+    order2.type = "LIMIT";
+    
+    // Send orders (simulating RiskManager signals)
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    oadapter.onOrderSignal(order1);
+    
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    oadapter.onOrderSignal(order2);
+    
+    // Keep running
+    std::cout << "Press Enter to stop..." << std::endl;
+    std::cin.get();
+    
+    oadapter.stop();
+    
+    return 0;
+}
+</file>
+
+</files>
