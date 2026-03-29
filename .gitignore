@@ -41,6 +41,5 @@ test4.cpp
 # OS files
 .DS_Store
 Thumbs.db
-*.csv
-*.csv
-database/*.csv
+.csv
+database/.csv
