@@ -3,9 +3,9 @@
 #include <iostream>
 #include <memory>
 
-// Include the exchange implementations
-#include "../exchange/exchange1.cpp"   // provides createBinanceExchange()
-// #include "../exchange/exchange2.cpp" // for Bybit, if available
+
+std::unique_ptr<BaseExchange> createBinanceExchange();
+
 
 OAdapter::OAdapter() {}
 
