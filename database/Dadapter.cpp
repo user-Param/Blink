@@ -5,154 +5,180 @@ namespace websocket = beast::websocket;
 namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
- 
+Dadapter::Dadapter() : ws_(ioc_) {}
 
+Dadapter::~Dadapter() {
+    stop();
+}
 
-    Dadapter::Dadapter() : ws_(ioc_) {}
-
-    void Dadapter::connect_to_server() {
-        try {
-            tcp::resolver resolver(ioc_);
-            auto const results = resolver.resolve(server_host_, server_port_);
-            
-            net::connect(ws_.next_layer(), results.begin(), results.end());
-            ws_.handshake(server_host_ + ":" + server_port_, "/");
-            
-            std::cout << "Connected to server at " << server_host_ << ":" << server_port_ << std::endl;
-        } catch (std::exception& e) {
-            std::cerr << "Connection failed: " << e.what() << std::endl;
-            throw;
-        }
+void Dadapter::connect_to_server() {
+    try {
+        tcp::resolver resolver(ioc_);
+        auto const results = resolver.resolve(server_host_, server_port_);
+        
+        net::connect(ws_.next_layer(), results.begin(), results.end());
+        ws_.handshake(server_host_ + ":" + server_port_, "/");
+        
+        std::cout << "[WebSocket] Connected to server at " << server_host_ << ":" << server_port_ << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "[WebSocket] Connection failed: " << e.what() << std::endl;
+        throw;
     }
+}
 
-    bool Dadapter::open_csv_file() {
-        csv_file_.open(csv_filename_);
-        if (!csv_file_.is_open()) {
-            std::cerr << "Could not open CSV file: " << csv_filename_ << std::endl;
-            return false;
+bool Dadapter::connect_to_db() {
+    try {
+        db_conn_ = std::make_unique<pqxx::connection>(db_config_);
+        if (db_conn_->is_open()) {
+            std::cout << "[PostgreSQL] Connected to database: " << db_conn_->dbname() << std::endl;
+            return true;
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "[PostgreSQL] Database connection error: " << e.what() << std::endl;
+    }
+    return false;
+}
+
+nlohmann::json Dadapter::get_profile(const std::string& username) {
+    try {
+        pqxx::work W(*db_conn_);
+        pqxx::result R = W.exec("SELECT * FROM profiles WHERE username = " + W.quote(username));
+        
+        if (!R.empty()) {
+            auto row = R[0];
+            return {
+                {"username", row["username"].as<std::string>()},
+                {"email", row["email"].as<std::string>()},
+                {"balance", row["total_balance"].as<double>()},
+                {"active_strategies", row["active_strategies_count"].as<int>()}
+            };
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "[PostgreSQL] Query error (get_profile): " << e.what() << std::endl;
+    }
+    return {};
+}
+
+void Dadapter::save_strategy(const nlohmann::json& strategy_data) {
+    try {
+        pqxx::work W(*db_conn_);
+        W.exec(
+            "INSERT INTO strategies (name, language, content, path) VALUES (" +
+            W.quote(strategy_data["name"].get<std::string>()) + ", " +
+            W.quote(strategy_data["language"].get<std::string>()) + ", " +
+            W.quote(strategy_data["content"].get<std::string>()) + ", " +
+            W.quote(strategy_data["path"].get<std::string>()) + ")"
+        );
+        W.commit();
+        std::cout << "[PostgreSQL] Strategy saved: " << strategy_data["name"] << std::endl;
+    } catch (const std::exception &e) {
+        std::cerr << "[PostgreSQL] Query error (save_strategy): " << e.what() << std::endl;
+    }
+}
+
+void Dadapter::stream_db_data() {
+    try {
+        pqxx::work W(*db_conn_);
+        // Fetch data ordered by timestamp
+        pqxx::result R = W.exec("SELECT timestamp, symbol, price, bid, ask FROM market_data ORDER BY timestamp ASC LIMIT 10000");
+        
+        std::cout << "[Dadapter] Starting stream from Database..." << std::endl;
+        
+        for (auto const &row : R) {
+            if (!streaming_) break;
+
+            nlohmann::json data = {
+                {"timestamp", row["timestamp"].as<std::string>()},
+                {"symbol", row["symbol"].as<std::string>()},
+                {"price", row["price"].as<double>()},
+                {"bid", row["bid"].as<double>()},
+                {"ask", row["ask"].as<double>()}
+            };
+
+            std::string msg = data.dump();
+            ws_.write(net::buffer(msg));
+            
+            // Simulating real-time delay (e.g., 100ms)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
-        std::string header;
-        std::getline(csv_file_, header);
-        std::cout << "Opened CSV: " << csv_filename_ << " (Header: " << header << ")" << std::endl;
-        return true;
+        std::cout << "[Dadapter] Database stream completed." << std::endl;
+        streaming_ = false;
+    } catch (const std::exception &e) {
+        std::cerr << "[PostgreSQL] Streaming error: " << e.what() << std::endl;
+        streaming_ = false;
     }
+}
 
-    bool Dadapter::has_more_data() {
-        if (!csv_file_.is_open()) return false;
-        return !csv_file_.eof() && streaming_;
-    }
-
-    std::string Dadapter::get_next_line() {
-        if (std::getline(csv_file_, current_line_)) {
-            return current_line_;
-        }
-        return "";
-    }
-
-    void Dadapter::send_mode_command() {
-        std::string mode_cmd = "{\"mode\": \"_Backtest\", \"subscribe\": [\"price_\", \"bid_\", \"ask_\"]}";
-        ws_.write(net::buffer(mode_cmd));
-        std::cout << "Sent: " << mode_cmd << std::endl;
-        
-        beast::flat_buffer buffer;
-        ws_.read(buffer);
-        std::cout << "Response: " << beast::buffers_to_string(buffer.data()) << std::endl;
-    }
-
-    void Dadapter::stream_csv_data() {
-        int row_count = 0;
-        int switch_after = 10000;
-        
-        while (has_more_data()) {
-            std::string line = get_next_line();
-            if (line.empty()) break;
-            
-            ws_.write(net::buffer(line));
-            std::cout << "[Dadapter] data : " << line << std::endl;
-            row_count++;
-            
-            if (row_count == switch_after) {
-            
-            //std::cout << "Switching to Live mode mid-stream..." << std::endl;
-            ws_.write(net::buffer("{\"mode\": \"_Live\"}"));
-            
-            beast::flat_buffer buffer;
-            ws_.read(buffer);
-            //std::cout << "Server response: " << beast::buffers_to_string(buffer.data()) << std::endl;
-        }
-        }
-        
-        std::cout << "Done! Streamed " << row_count << " rows total" << std::endl;
-    }
-
-
-    void Dadapter::start_streaming() {
+void Dadapter::start_streaming() {
     if (streaming_) return;
-    if (!open_csv_file()) return;
     streaming_ = true;
-    // Optionally send mode command if needed
-    // send_mode_command();
-    stream_thread_ = std::thread(&Dadapter::stream_csv_data, this);
-    }
+    stream_thread_ = std::thread(&Dadapter::stream_db_data, this);
+}
 
-    void Dadapter::stop_streaming() {
+void Dadapter::stop_streaming() {
     streaming_ = false;
     if (stream_thread_.joinable()) stream_thread_.join();
-    }
+}
 
-
-
-
-
-
-    void Dadapter::run() {
+void Dadapter::run() {
     try {
         connect_to_server();
+        if (!connect_to_db()) {
+            std::cerr << "Exiting due to database connection failure." << std::endl;
+            return;
+        }
 
-        // Identify as adapter
+
         nlohmann::json id = {{"type", "adapter"}};
         ws_.write(net::buffer(id.dump()));
-        //std::cout << "Sent adapter identification." << std::endl;
 
         beast::flat_buffer buffer;
         while (running_) {
+            ws_.read(buffer);
+            std::string msg = beast::buffers_to_string(buffer.data());
+            buffer.consume(buffer.size());
+
             try {
-                ws_.read(buffer);
-                std::string msg = beast::buffers_to_string(buffer.data());
-                buffer.consume(buffer.size());
-
                 auto j = nlohmann::json::parse(msg);
-                if (!j.contains("command")) continue;
-
-                if (j["command"] == "start") {
-                    if (!streaming_) {
+                if (j.contains("command")) {
+                    std::string cmd = j["command"];
+                    if (cmd == "start") {
                         start_streaming();
-                    }
-                } else if (j["command"] == "stop") {
-                    if (streaming_) {
+                    } else if (cmd == "stop") {
                         stop_streaming();
                     }
+                } 
+                else if (j.contains("request")) {
+                    std::string req = j["request"];
+                    nlohmann::json response;
+                    response["type"] = "db_response";
+                    response["request_id"] = j.value("request_id", "");
+
+                    if (req == "get_profile") {
+                        response["data"] = get_profile(j["username"]);
+                    } else if (req == "save_strategy") {
+                        save_strategy(j["data"]);
+                        response["status"] = "success";
+                    } else if (req == "get_strategies") {
+                        // response["data"] = get_all_strategies(); // Implement if needed
+                    }
+
+                    ws_.write(net::buffer(response.dump()));
                 }
-            } catch (const nlohmann::json::parse_error& e) {
-                // Ignore non‑JSON messages (e.g., text confirmations from server)
-                //std::cout << "Ignoring non‑JSON message: " << msg << std::endl;
             } catch (const std::exception& e) {
-                std::cerr << "Error in command loop: " << e.what() << std::endl;
-                running_ = false;  // Stop loop on serious errors
+                // Ignore parse errors or handle them
             }
         }
     } catch (const std::exception& e) {
-        std::cerr << "Fatal error in run(): " << e.what() << std::endl;
+        std::cerr << "[Dadapter] Fatal error: " << e.what() << std::endl;
     }
-    std::cout << "Dadapter run() ended." << std::endl;
 }
 
-    void Dadapter::stop() {
-        running_ = false;
-        std::cout << "Dadapter is stopped" << std::endl;
-    }
-
+void Dadapter::stop() {
+    running_ = false;
+    stop_streaming();
+}
 
 int main() {
     Dadapter adapter;

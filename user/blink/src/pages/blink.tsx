@@ -8,7 +8,7 @@ import { Trade } from "./trade";
 import { Profile } from "./profile";
 
 const Blink = () => {
-    const [activePage, setActivePage] = useState("editor");
+    const [activePage, setActivePage] = useState("home");
     return(
         <>
         <div className="bg-[#181818] h-screen">
@@ -16,9 +16,10 @@ const Blink = () => {
                 <Navbar setActivePage={setActivePage} activePage={activePage}/>
             </div>
             <div className="h-screen">
+                {activePage === "home" && <Home />}
                 {activePage === "docs" && <Docs/>}
                 {activePage === "trade" && <Trade />}
-                {activePage === "research" && <Editor />}               
+                {activePage === "research" && <Editor />}
                 {activePage === "simulate" && <Simulate />}
                 {activePage === "profile" && <Profile />}
             </div>

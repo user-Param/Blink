@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import Blink from '../src/pages/blink'
 import './App.css'
 

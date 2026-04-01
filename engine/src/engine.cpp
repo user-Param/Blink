@@ -10,6 +10,7 @@ Engine::~Engine() {
 }
 
 void Engine::start() {
+    std::cout << "Engine started" << std::endl;
     connectDatafeed();
     
     running_ = true;
