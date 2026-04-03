@@ -5,7 +5,7 @@
 #include <vector>
 #include <functional>
 
-using PriceCallback = std::function<void(double price, double bid, double ask)>;
+using PriceCallback = std::function<void(const std::string& symbol, double price, double bid, double ask, long timestamp)>;
 
 class Exchange1 {
 public:

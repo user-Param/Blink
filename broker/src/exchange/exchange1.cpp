@@ -26,23 +26,31 @@ void Exchange1::subscribe(const std::vector<std::string>& symbols) {
     
     
     if (callback_) {
-        std::thread([this]() {
+    for (const auto& symbol : symbols) {
+
+        std::thread([this, symbol]() {
             std::random_device rd;
             std::mt19937 gen(rd());
             std::uniform_real_distribution<> price_dist(50000, 60000);
             std::uniform_real_distribution<> spread_dist(0.1, 1.0);
-            
+
             while (true) {
                 double price = price_dist(gen);
                 double spread = spread_dist(gen);
                 double bid = price - spread;
                 double ask = price + spread;
-                
-                callback_(price, bid, ask);
+
+                long timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::system_clock::now().time_since_epoch()
+                ).count();
+
+                callback_(symbol, price, bid, ask, timestamp);
+
                 std::this_thread::sleep_for(std::chrono::seconds(1));
             }
         }).detach();
     }
+}
 }
 
 void Exchange1::set_callback(PriceCallback callback) {

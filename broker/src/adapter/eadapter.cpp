@@ -25,10 +25,10 @@ void EAdapter::subscribe_symbols() {
 }
 
 void EAdapter::on_update() {
-    exchange_->set_callback([this](double price, double bid, double ask) {
-        std::cout << "Price update - Price: " << price 
-                  << " Bid: " << bid << " Ask: " << ask << std::endl;
-        // Here you would send to datafeed server (like Dadapter does)
+    exchange_->set_callback([this](const std::string& symbol, double price, double bid, double ask, long ts) {
+        if (external_cb_) {
+            external_cb_(symbol, price, bid, ask, ts);
+        }
     });
 }
 
@@ -58,4 +58,9 @@ void EAdapter::stop() {
         worker_thread_.join();
     }
     std::cout << "EAdapter stopped" << std::endl;
+}
+
+
+void EAdapter::set_callback(ExternalCallback cb) {
+    external_cb_ = std::move(cb);
 }

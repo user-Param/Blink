@@ -1,6 +1,3 @@
--- Initialize Blink Trading Platform Database
-
--- 1. Market Data Table (replacing bitcoin_final.csv)
 CREATE TABLE IF NOT EXISTS market_data (
     id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP NOT NULL,
@@ -11,21 +8,21 @@ CREATE TABLE IF NOT EXISTS market_data (
     volume DECIMAL(18, 8)
 );
 
--- Create an index on timestamp for faster time-series queries
+
 CREATE INDEX IF NOT EXISTS idx_market_data_timestamp ON market_data(timestamp);
 
--- 2. Strategies Table
+
 CREATE TABLE IF NOT EXISTS strategies (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    language VARCHAR(20) NOT NULL, -- 'cpp', 'python', 'ipynb'
+    language VARCHAR(20) NOT NULL, 
     content TEXT NOT NULL,
     path TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Profiles Table
+
 CREATE TABLE IF NOT EXISTS profiles (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -35,15 +32,15 @@ CREATE TABLE IF NOT EXISTS profiles (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 4. Trade History (Non time-series market data)
+
 CREATE TABLE IF NOT EXISTS trade_history (
     id SERIAL PRIMARY KEY,
     profile_id INTEGER REFERENCES profiles(id),
     symbol VARCHAR(20) NOT NULL,
-    side VARCHAR(10) NOT NULL, -- 'BUY' or 'SELL'
+    side VARCHAR(10) NOT NULL, 
     amount DECIMAL(18, 8) NOT NULL,
     price DECIMAL(18, 8) NOT NULL,
     pnl DECIMAL(18, 2),
-    status VARCHAR(20), -- 'WIN', 'LOSS', 'OPEN'
+    status VARCHAR(20), 
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

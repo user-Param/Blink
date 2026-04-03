@@ -10,6 +10,7 @@ list(APPEND CMAKE_PREFIX_PATH /opt/homebrew)
 find_package(Boost 1.90.0 REQUIRED COMPONENTS thread)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 
 include_directories(include)
