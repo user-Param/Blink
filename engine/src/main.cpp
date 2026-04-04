@@ -40,9 +40,7 @@ public:
 
 int main(int argc, char** argv)
 {
-    try
-    {
-        if(argc != 4)
+    if(argc != 4)
         {
             std::cerr <<
                 "Usage: websocket-client-sync <host> <port> <text>\n" <<
@@ -77,8 +75,9 @@ int main(int argc, char** argv)
         ws.write(net::buffer(std::string(text)));
         beast::flat_buffer buffer;
         ws.read(buffer);
-
-
+    try
+    {
+        
         auto riskMgr = std::make_shared<RiskManager>();
         auto algoMgr = std::make_shared<AlgoManager>(riskMgr);
         algoMgr->addAlgo(std::make_unique<PrintAlgo>());

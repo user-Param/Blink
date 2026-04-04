@@ -90,7 +90,8 @@ void Engine::readLoop()
             std::string msg = beast::buffers_to_string(buffer.data());
             buffer.consume(buffer.size());
 
-            // Pass raw message to onData (which will parse and forward)
+            std::cout << "[Engine][RAW] " << msg << std::endl;
+
             onData(msg);
         }
         catch (const std::exception &e)
@@ -117,6 +118,12 @@ void Engine::onData(const std::string &raw)
         data.bid = j["bid"];
         data.ask = j["ask"];
         data.timestamp = j["timestamp"];
+
+        std::cout << "[Engine][PARSED] " << data.symbol 
+                  << " | P:" << data.price 
+                  << " B:" << data.bid 
+                  << " A:" << data.ask 
+                  << " @ " << data.timestamp << std::endl;
 
         algoManager_->onTick(data);
     }
