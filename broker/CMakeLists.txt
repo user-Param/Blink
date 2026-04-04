@@ -5,9 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find dependencies
-find_package(Boost REQUIRED COMPONENTS thread)
+find_package(Boost CONFIG REQUIRED COMPONENTS thread)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 # Include directories
 include_directories(include)
@@ -28,6 +29,8 @@ target_link_libraries(eadapter
     OpenSSL::SSL
     OpenSSL::Crypto
     Threads::Threads
+    nlohmann_json::nlohmann_json
+
 )
 
 # Also link libraries to broker
@@ -36,4 +39,6 @@ target_link_libraries(broker
     OpenSSL::SSL
     OpenSSL::Crypto
     Threads::Threads
+    nlohmann_json::nlohmann_json
+
 )

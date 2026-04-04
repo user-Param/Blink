@@ -28,7 +28,7 @@ function TradeChart() {
       locale: "en",
       save_image: true,
       style: "1",
-      symbol: "SOL",
+      symbol: "BTCUSDT",
       theme: "dark",
       timezone: "Etc/UTC",
       backgroundColor: "#0F0F0F",

@@ -25,7 +25,7 @@ const TradeOrderBook = ({ marketData }: TradeOrderBookProps) => {
   }, [price]);
 
   return (
-    <div className="w-64 border-r border-white/10 flex flex-col bg-[#0d0d0d] shrink-0">
+    <div className="w-64 border-r border-white/10 bg-[#0d0d0d] shrink-0">
       <div className="p-3 border-b border-white/10 flex justify-between items-center bg-[#111]">
         <span className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Order Book</span>
         <Settings2 size={12} className="text-white/20 hover:text-white cursor-pointer transition-colors" />
