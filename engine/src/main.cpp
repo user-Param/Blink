@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <boost/asio/signal_set.hpp>
 #include "../include/algoManager.h"
 #include "../include/riskManager.h"
 #include "../include/algo.h"
@@ -25,25 +26,28 @@ int main(int argc, char** argv)
         auto riskMgr = std::make_shared<RiskManager>();
         auto algoMgr = std::make_shared<AlgoManager>(riskMgr);
         
-        // Add our debug printing algo
         algoMgr->addAlgo(std::make_unique<PrintAlgo>());
 
         Engine engine(algoMgr);
-        
-        // Subscribe to ticker_ (this is what the live_source broadcasts)
-        // and other potential topics
         engine.setTopics({"ticker_", "price_", "bid_", "ask_"});
-        
         engine.start();
 
         // Give it a moment to connect and then set mode
         std::this_thread::sleep_for(std::chrono::seconds(1));
         engine.sendMode("_Live");
 
-        std::cout << "\nEngine is running. Listening for market data..." << std::endl;
-        std::cout << "Press Enter to shutdown." << std::endl;
-        
-        std::cin.get();
+        std::cout << "\nEngine is running and listening for market data..." << std::endl;
+
+        // Use asio signal_set to wait for termination signals (Ctrl+C, etc.)
+        // This keeps the engine alive even when running in the background.
+        boost::asio::io_context ioc;
+        boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);
+        signals.async_wait([&](const boost::system::error_code&, int) {
+            std::cout << "\nShutdown signal received." << std::endl;
+            ioc.stop();
+        });
+
+        ioc.run();
 
         std::cout << "Shutting down engine..." << std::endl;
         engine.stop();
