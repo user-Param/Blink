@@ -32,19 +32,17 @@ void Engine::stop()
 
 void Engine::setTopics(const std::vector<std::string> &topics)
 {
-
+    topics_ = topics;
     if (ws_.is_open()) {
-    nlohmann::json subMsg;
-    subMsg["subscribe"] = true;
-    subMsg["topics"] = topics_;
-
-    ws_.write(net::buffer(subMsg.dump()));
-}
+        nlohmann::json subMsg;
+        subMsg["subscribe"] = topics_;
+        ws_.write(net::buffer(subMsg.dump()));
+        std::cout << "[Engine] Updated subscriptions: " << subMsg.dump() << std::endl;
+    }
 }
 
 void Engine::connectDatafeed()
 {
-
     try
     {
         tcp::resolver resolver(ioc_);
@@ -54,17 +52,16 @@ void Engine::connectDatafeed()
         ws_.handshake(host_ + ":" + port_, "/");
         std::cout << "Engine connected to datafeed server at " << host_ << ":" << port_ << std::endl;
 
-        nlohmann::json subMsg;
-        subMsg["subscribe"] = true;
-        subMsg["topics"] = topics_;
-
-        ws_.write(net::buffer(subMsg.dump()));
-
-        std::cout << "Subscribed to topics" << std::endl;
+        if (!topics_.empty()) {
+            nlohmann::json subMsg;
+            subMsg["subscribe"] = topics_;
+            ws_.write(net::buffer(subMsg.dump()));
+            std::cout << "[Engine] Subscribed to: " << subMsg.dump() << std::endl;
+        }
     }
     catch (const std::exception &e)
     {
-        std::cerr << e.what() << '\n';
+        std::cerr << "Engine connection error: " << e.what() << std::endl;
         throw;
     }
 }
