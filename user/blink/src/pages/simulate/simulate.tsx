@@ -18,7 +18,7 @@ const Simulate = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
     const [selectedStrategy, setSelectedStrategy] = useState("Trend Follower");
-    
+
     // Default datasets
     const [datasets, setDatasets] = useState<Dataset[]>([
         {
@@ -42,9 +42,8 @@ const Simulate = () => {
     });
 
     useEffect(() => {
-        subscribe("price_");
-        subscribe("bid_");
-        subscribe("ask_");
+        // Subscribe to consolidated market data
+        subscribe("ticker_");
     }, [subscribe]);
 
     const handleAddDataset = (e: React.FormEvent) => {
@@ -70,7 +69,7 @@ const Simulate = () => {
         }
         const dataset = datasets.find(d => d.id === selectedDatasetId);
         console.log(`Starting backtest with strategy: ${selectedStrategy} on dataset: ${dataset?.title}`);
-        
+
         sendMessage(JSON.stringify({
             mode: "_Backtest",
             strategy: selectedStrategy,
@@ -87,12 +86,12 @@ const Simulate = () => {
                         <Database size={18} className="text-[#FF6D1F]" />
                         <h2 className="text-white font-semibold">Simulate & Backtest</h2>
                     </div>
-                    
+
                     <div className="h-6 w-px bg-white/10"></div>
-                    
+
                     <div className="flex items-center gap-3">
                         <span className="text-white/40 text-xs uppercase tracking-wider font-medium">Strategy</span>
-                        <select 
+                        <select
                             value={selectedStrategy}
                             onChange={(e) => setSelectedStrategy(e.target.value)}
                             className="bg-[#1e1e1e] border border-white/10 text-white text-xs rounded px-3 py-1.5 focus:outline-none focus:border-[#FF6D1F]"
@@ -110,20 +109,20 @@ const Simulate = () => {
                         <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}></span>
                         <span className="text-white/40 text-xs">{isConnected ? "Connected" : "Disconnected"}</span>
                     </div>
-                    
+
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-sm transition-colors"
                     >
                         <Plus size={16} /> Add Dataset
                     </button>
-                    
+
                     <button
                         onClick={startBacktest}
                         disabled={!selectedDatasetId}
                         className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                            selectedDatasetId 
-                                ? "bg-[#FF6D1F] hover:bg-[#e55d1a] text-white shadow-lg shadow-[#FF6D1F]/20" 
+                            selectedDatasetId
+                                ? "bg-[#FF6D1F] hover:bg-[#e55d1a] text-white shadow-lg shadow-[#FF6D1F]/20"
                                 : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
                         }`}
                     >
@@ -140,7 +139,7 @@ const Simulate = () => {
                             <h1 className="text-2xl font-bold text-white mb-2">Available Datasets</h1>
                             <p className="text-white/40 text-sm">Select a dataset to begin simulation</p>
                         </div>
-                        
+
                         {marketData && (
                             <div className="flex gap-6 bg-white/5 border border-white/10 p-4 rounded-xl">
                                 <div className="text-center">
@@ -172,8 +171,8 @@ const Simulate = () => {
                                 onClick={() => setSelectedDatasetId(dataset.id)}
                             />
                         ))}
-                        
-                        <button 
+
+                        <button
                             onClick={() => setIsModalOpen(true)}
                             className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 hover:bg-white/5 hover:border-[#FF6D1F]/50 transition-all group"
                         >
@@ -195,18 +194,18 @@ const Simulate = () => {
                                 <FileText size={20} className="text-[#FF6D1F]" />
                                 New Dataset
                             </h3>
-                            <button 
+                            <button
                                 onClick={() => setIsModalOpen(false)}
                                 className="text-white/30 hover:text-white transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
-                        
+
                         <form onSubmit={handleAddDataset} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-white/40 uppercase mb-1.5 ml-1">Dataset Title</label>
-                                <input 
+                                <input
                                     required
                                     type="text"
                                     placeholder="e.g. BTC-USDT 2024 Spring"
@@ -215,10 +214,10 @@ const Simulate = () => {
                                     onChange={e => setFormData({...formData, title: e.target.value})}
                                 />
                             </div>
-                            
+
                             <div>
                                 <label className="block text-xs font-bold text-white/40 uppercase mb-1.5 ml-1">Description</label>
-                                <textarea 
+                                <textarea
                                     required
                                     placeholder="Brief details about the data..."
                                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors h-24 resize-none"
@@ -230,7 +229,7 @@ const Simulate = () => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs font-bold text-white/40 uppercase mb-1.5 ml-1">Instrument</label>
-                                    <input 
+                                    <input
                                         required
                                         type="text"
                                         placeholder="BTC/USDT"
@@ -241,7 +240,7 @@ const Simulate = () => {
                                 </div>
                                 <div>
                                     <label className="block text-xs font-bold text-white/40 uppercase mb-1.5 ml-1">Timeframe</label>
-                                    <input 
+                                    <input
                                         required
                                         type="text"
                                         placeholder="Jan-Dec 2023"
@@ -255,8 +254,8 @@ const Simulate = () => {
                             <div className="pt-2">
                                 <label className="block text-xs font-bold text-white/40 uppercase mb-1.5 ml-1">Upload CSV</label>
                                 <div className="relative group">
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         accept=".csv"
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         onChange={e => setFormData({...formData, file: e.target.files ? e.target.files[0] : null})}
@@ -270,7 +269,7 @@ const Simulate = () => {
                                 </div>
                             </div>
 
-                            <button 
+                            <button
                                 type="submit"
                                 className="w-full bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold py-4 rounded-xl mt-4 shadow-lg shadow-[#FF6D1F]/20 transition-all active:scale-[0.98]"
                             >

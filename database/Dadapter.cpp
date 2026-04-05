@@ -88,6 +88,7 @@ void Dadapter::stream_db_data() {
             if (!streaming_) break;
 
             nlohmann::json data = {
+                {"topic", "ticker_"},
                 {"timestamp", row["timestamp"].as<std::string>()},
                 {"symbol", row["symbol"].as<std::string>()},
                 {"price", row["price"].as<double>()},

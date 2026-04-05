@@ -29,7 +29,7 @@ private:
 
     // PostgreSQL members
     std::unique_ptr<pqxx::connection> db_conn_;
-    std::string db_config_ = "host=localhost port=5432 dbname=blink user=postgres password=password";
+    std::string db_config_ = "host=localhost port=5432 dbname=blink user=blink password=";
     
     // Control members
     std::atomic<bool> running_{true};

@@ -26,6 +26,9 @@ fi
 DATAFEED_PID=$!
 echo "Datafeed server started (PID: $DATAFEED_PID)"
 
+# Give datafeed server time to start up
+sleep 2
+
 echo "Starting Dadapter..."
 ./dadapter &
 ADAPTER_PID=$!
