@@ -1,4 +1,5 @@
 #include "Dadapter.h"
+#include <thread>
 
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
@@ -12,17 +13,30 @@ Dadapter::~Dadapter() {
 }
 
 void Dadapter::connect_to_server() {
-    try {
-        tcp::resolver resolver(ioc_);
-        auto const results = resolver.resolve(server_host_, server_port_);
-        
-        net::connect(ws_.next_layer(), results.begin(), results.end());
-        ws_.handshake(server_host_ + ":" + server_port_, "/");
-        
-        std::cout << "[WebSocket] Connected to server at " << server_host_ << ":" << server_port_ << std::endl;
-    } catch (std::exception& e) {
-        std::cerr << "[WebSocket] Connection failed: " << e.what() << std::endl;
-        throw;
+    const int max_retries = 5;
+    int retry_count = 0;
+    
+    while (retry_count < max_retries) {
+        try {
+            tcp::resolver resolver(ioc_);
+            auto const results = resolver.resolve(server_host_, server_port_);
+            
+            net::connect(ws_.next_layer(), results.begin(), results.end());
+            ws_.handshake(server_host_ + ":" + server_port_, "/");
+            
+            std::cout << "[WebSocket] Connected to server at " << server_host_ << ":" << server_port_ << std::endl;
+            return;
+        } catch (std::exception& e) {
+            retry_count++;
+            if (retry_count < max_retries) {
+                std::cerr << "[WebSocket] Connection failed (attempt " << retry_count << "/" << max_retries 
+                          << "): " << e.what() << " - retrying in 2 seconds..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(2));
+            } else {
+                std::cerr << "[WebSocket] Connection failed after " << max_retries << " attempts: " << e.what() << std::endl;
+                throw;
+            }
+        }
     }
 }
 

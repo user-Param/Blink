@@ -87,7 +87,7 @@ void Engine::readLoop()
             std::string msg = beast::buffers_to_string(buffer.data());
             buffer.consume(buffer.size());
 
-            std::cout << "[Engine][RAW] " << msg << std::endl;
+            //std::cout << "[Engine][RAW] " << msg << std::endl;
 
             onData(msg);
         }
@@ -116,11 +116,11 @@ void Engine::onData(const std::string &raw)
         data.ask = j["ask"];
         data.timestamp = j["timestamp"];
 
-        std::cout << "[Engine][PARSED] " << data.symbol 
-                  << " | P:" << data.price 
-                  << " B:" << data.bid 
-                  << " A:" << data.ask 
-                  << " @ " << data.timestamp << std::endl;
+        // std::cout << "[Engine][PARSED] " << data.symbol 
+        //           << " | P:" << data.price 
+        //           << " B:" << data.bid 
+        //           << " A:" << data.ask 
+        //           << " @ " << data.timestamp << std::endl;
 
         algoManager_->onTick(data);
     }

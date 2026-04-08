@@ -7,55 +7,70 @@
 #include "../include/algo.h"
 #include "../include/engine.h"
 
-class PrintAlgo : public Algo {
+// A simple algorithm that places orders based on price movement
+class SimpleScalper : public Algo {
 public:
     void onTick(const MarketData& data) override {
-        std::cout << "[Algo] Received Update: " << data.symbol 
-                  << " | Price: " << data.price 
-                  << " | Bid: " << data.bid 
-                  << " | Ask: " << data.ask << std::endl;
+        // std::cout << "[Algo] Tick: " << data.price << std::endl;
+        
+        if (last_price_ > 0) {
+            // If price drops by more than 0.5, Buy
+            if (data.price < last_price_ - 0.5) {
+                std::cout << "[Algo] Price Drop! Attempting to BUY." << std::endl;
+                buy(data.symbol, data.price, 1);
+            }
+            // If price rises by more than 0.5, Sell
+            else if (data.price > last_price_ + 0.5) {
+                std::cout << "[Algo] Price Spike! Attempting to SELL." << std::endl;
+                sell(data.symbol, data.price, 1);
+            }
+        }
+        last_price_ = data.price;
     }
+private:
+    double last_price_ = 0;
 };
 
 int main(int argc, char** argv)
 {
     try
     {
-        std::cout << "--- Starting Trading Engine ---" << std::endl;
+        std::cout << "--- Starting BLINK Engine ---" << std::endl;
 
+        // 1. Initialize RiskManager (Connects to Executor on 9001)
         auto riskMgr = std::make_shared<RiskManager>();
+        
+        // 2. Initialize AlgoManager
         auto algoMgr = std::make_shared<AlgoManager>(riskMgr);
         
-        algoMgr->addAlgo(std::make_unique<PrintAlgo>());
+        // 3. Add Algorithm
+        algoMgr->addAlgo(std::make_unique<SimpleScalper>());
 
+        // 4. Initialize Engine (Connects to Datafeed on 9000)
         Engine engine(algoMgr);
-        engine.setTopics({"ticker_", "price_", "bid_", "ask_"});
+        engine.setTopics({"ticker_"});
         engine.start();
 
-        // Give it a moment to connect and then set mode
         std::this_thread::sleep_for(std::chrono::seconds(1));
         engine.sendMode("_Live");
 
-        std::cout << "\nEngine is running and listening for market data..." << std::endl;
+        std::cout << "\nEngine is running. Trading logic active." << std::endl;
 
-        // Use asio signal_set to wait for termination signals (Ctrl+C, etc.)
-        // This keeps the engine alive even when running in the background.
         boost::asio::io_context ioc;
         boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);
         signals.async_wait([&](const boost::system::error_code&, int) {
-            std::cout << "\nShutdown signal received." << std::endl;
+            std::cout << "\nEngine shutdown signal received." << std::endl;
             ioc.stop();
         });
 
         ioc.run();
 
-        std::cout << "Shutting down engine..." << std::endl;
         engine.stop();
         std::cout << "Engine stopped safely." << std::endl;
     }
     catch(std::exception const& e)
     {
-        std::cerr << "Fatal Error: " << e.what() << std::endl;
+        std::cerr << "Engine Fatal Error: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;

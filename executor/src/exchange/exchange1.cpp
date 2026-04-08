@@ -1,34 +1,17 @@
-#include "../include/exchange/base_exchange.h"
-#include <iostream>
+#include "exchange/binance_exchange.h"
+#include "config/config.h"
 #include <memory>
 
-class BinanceExchange : public BaseExchange {
-public:
-    void connect() override {
-        std::cout << "[Binance] Connecting..." << std::endl;
-        connected_ = true;
-    }
-
-    void disconnect() override {
-        std::cout << "[Binance] Disconnecting..." << std::endl;
-        connected_ = false;
-    }
-
-    bool isConnected() const override { return connected_; }
-
-    void sendOrder(const OrderRequest& order) override {
-        std::cout << "[Binance] Sending order: " << order.symbol
-                  << " " << order.side << " " << order.quantity
-                  << " @ " << order.price << std::endl;
-
-        // Simulate exchange response
-        notifyResponse(order.order_id, "ACCEPTED", "Order accepted by Binance");
-    }
-
-    std::string getId() const override { return "binance"; }
-};
-
-// Factory function
 std::unique_ptr<BaseExchange> createBinanceExchange() {
-    return std::make_unique<BinanceExchange>();
+    auto& config = Config::getInstance();
+    
+    std::string api_key = config.get("BINANCE_API_KEY", "");
+    std::string api_secret = config.get("BINANCE_API_SECRET", "");
+    bool testnet = config.getBool("BINANCE_TESTNET", true);
+    
+    if (api_key.empty() || api_secret.empty()) {
+        std::cerr << "[Exchange] Warning: BINANCE_API_KEY or BINANCE_API_SECRET not set in .env" << std::endl;
+    }
+    
+    return std::make_unique<BinanceExchange>(api_key, api_secret, testnet);
 }

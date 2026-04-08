@@ -2,10 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(engine)
 
 set(CMAKE_CXX_STANDARD 17)
-
+cmake_policy(SET CMP0167 OLD)
 
 list(APPEND CMAKE_PREFIX_PATH /opt/homebrew)
-
 
 find_package(Boost 1.90.0 REQUIRED COMPONENTS thread)
 find_package(OpenSSL REQUIRED)
@@ -19,6 +18,7 @@ include_directories(include)
 add_executable(engine 
     src/main.cpp
     src/engine.cpp
+    src/algo.cpp
     src/algoManager.cpp
     src/riskManager.cpp
     )
