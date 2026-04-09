@@ -63,7 +63,11 @@ const Editor = () => {
                     <Explorer
                     files={files}
                     setFiles={setFiles}
-                    setActiveFile={setActiveFile}
+                    activeFileId={activeFile.id}
+                    setActiveFileId={(id: string) => {
+                      const file = files.find(f => f.id === id);
+                      if (file) setActiveFile(file);
+                    }}
                     />
                 </div>
                 <div className="flex flex-col h-[100%] w-[65%]">

@@ -16,7 +16,7 @@ const Blink = () => {
                 <Navbar setActivePage={setActivePage} activePage={activePage}/>
             </div>
             <div className="h-screen">
-                {activePage === "home" && <Home />}
+                {activePage === "home" && <Home setActivePage={setActivePage} />}
                 {activePage === "docs" && <Docs/>}
                 {activePage === "trade" && <Trade />}
                 {activePage === "research" && <Editor />}

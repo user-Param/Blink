@@ -1,25 +1,129 @@
-import { useState } from "react";
-import { LayoutDashboard, TrendingUp, TrendingDown, XCircle, AlertCircle, Clock } from "lucide-react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { LayoutDashboard, TrendingUp, TrendingDown, AlertCircle, Clock, Activity } from "lucide-react";
 import { useOrderTracking } from "../../hooks/useOrderTracking";
+
+interface LiveOrder {
+  id: string;
+  order_id: string;
+  strategy_id: string;
+  side: 'BUY' | 'SELL';
+  symbol: string;
+  quantity: number;
+  price: number;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'ERROR';
+  exchange_order_id?: string;
+  message?: string;
+  timestamp: number;
+}
 
 const TradePositions = () => {
   const [activeTab, setActiveTab] = useState("Positions");
   const { positions, summary, orders, isConnected } = useOrderTracking();
+  const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([]);
+  const wsRef = useRef<WebSocket | null>(null);
+  const updateBatchRef = useRef<LiveOrder[]>([]);
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const tabs = ["Open Orders", "Positions", "Trade History", "Funds"];
+  const tabs = ["Open Orders", "Positions", "Trade History", "Live Activity", "Funds"];
 
-  // Get open/pending orders
-  const openOrders = orders.filter(
-    (o) => o.status === "PENDING" || o.status === "ACCEPTED"
+  // Get open/pending orders (memoized)
+  const openOrders = useMemo(() => 
+    orders.filter((o) => o.status === "PENDING" || o.status === "ACCEPTED"),
+    [orders]
   );
 
-  // Get filled orders (closed positions for history)
-  const tradeHistory = orders.filter(
-    (o) => o.status === "ACCEPTED"
-  ).slice(0, 10);
+  // Get filled orders (memoized)
+  const tradeHistory = useMemo(() =>
+    orders.filter((o) => o.status === "ACCEPTED").slice(0, 10),
+    [orders]
+  );
+
+  // Batch update handler - updates every 100ms instead of per message
+  const processBatchUpdates = useCallback(() => {
+    if (updateBatchRef.current.length > 0) {
+      setLiveOrders(prev => 
+        [...updateBatchRef.current, ...prev].slice(0, 100)
+      );
+      updateBatchRef.current = [];
+    }
+  }, []);
+
+  // Connect to executor for live activity stream
+  useEffect(() => {
+    const connectToExecutor = () => {
+      try {
+        if (wsRef.current) {
+          wsRef.current.close();
+        }
+
+        wsRef.current = new WebSocket('ws://localhost:9001');
+
+        wsRef.current.onopen = () => {
+          console.log('[TradePositions] Connected to executor for live activity');
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'order_result') {
+              const newOrder: LiveOrder = {
+                id: `${data.timestamp}-${Math.random()}`,
+                order_id: data.order_id,
+                strategy_id: data.strategy_id || 'default',
+                side: data.side || 'BUY',
+                symbol: data.symbol || 'UNKNOWN',
+                quantity: data.quantity || 1,
+                price: data.price || 0,
+                status: data.status,
+                exchange_order_id: data.exchange_order_id,
+                message: data.message,
+                timestamp: data.timestamp
+              };
+              
+              // Batch updates instead of immediate state update
+              updateBatchRef.current.push(newOrder);
+              
+              // Clear existing timer
+              if (updateTimerRef.current) {
+                clearTimeout(updateTimerRef.current);
+              }
+              
+              // Set new timer - batch updates every 100ms
+              updateTimerRef.current = setTimeout(processBatchUpdates, 100);
+            }
+          } catch (e) {
+            console.log('[TradePositions] Message received:', event.data);
+          }
+        };
+
+        wsRef.current.onerror = () => {
+          console.error('[TradePositions] WebSocket error');
+        };
+
+        wsRef.current.onclose = () => {
+          console.log('[TradePositions] Disconnected from executor');
+          setTimeout(connectToExecutor, 3000);
+        };
+      } catch (error) {
+        console.error('[TradePositions] Connection error:', error);
+      }
+    };
+
+    connectToExecutor();
+
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current);
+      }
+    };
+  }, [processBatchUpdates]);
 
   return (
-    <div className="h-64 border-t border-white/10 bg-[#0d0d0d] flex flex-col min-h-0">
+    <div className="flex-1 border-t border-white/10 flex flex-col max-h-100 overflow-hidden">
       {/* Tabs Header */}
       <div className="flex border-b border-white/5 bg-[#111] shrink-0">
         {tabs.map((tab) => (
@@ -312,6 +416,91 @@ const TradePositions = () => {
                   ))}
                 </tbody>
               </table>
+            )}
+          </div>
+        ) : null}
+
+        {/* LIVE ACTIVITY TAB */}
+        {activeTab === "Live Activity" ? (
+          <div className="w-full h-full flex flex-col bg-[#0a0a0a]">
+            {liveOrders.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-white/10 gap-3">
+                <Activity size={24} />
+                <span className="text-[10px] font-black uppercase tracking-widest">
+                  Waiting for orders...
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Table Header */}
+                <div className="sticky top-0 z-10 bg-[#0a0a0a]/95 shrink-0">
+                  <div className="flex text-[9px] font-black text-white/20 uppercase tracking-tighter border-b border-white/5 bg-[#0a0a0a]/50">
+                    <div className="px-4 py-3 w-24">Timestamp</div>
+                    <div className="px-4 py-3 w-20">Strategy</div>
+                    <div className="px-4 py-3 w-20">Symbol</div>
+                    <div className="px-4 py-3 w-16">Side</div>
+                    <div className="px-4 py-3 w-16">Qty</div>
+                    <div className="px-4 py-3 w-24">Price</div>
+                    <div className="px-4 py-3 w-20">Status</div>
+                    <div className="px-4 py-3 flex-1">Message</div>
+                  </div>
+                </div>
+                
+                {/* Scrollable list with max-height */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                  <div className="text-[11px] font-medium">
+                    {liveOrders.slice(0, 100).map((order) => (
+                      <div
+                        key={order.id}
+                        className="flex items-center border-b border-white/5 hover:bg-white/5 transition-colors"
+                      >
+                        <div className="px-4 py-3 text-white/60 text-[9px] w-24">
+                          {new Date(order.timestamp).toLocaleTimeString()}
+                        </div>
+                        <div className="px-4 py-3 text-white/60 w-20">
+                          {order.strategy_id}
+                        </div>
+                        <div className="px-4 py-3 font-bold text-white/90 w-20">
+                          {order.symbol}
+                        </div>
+                        <div className="px-4 py-3 w-16">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[9px] font-black inline-block ${
+                              order.side === "BUY"
+                                ? "bg-green-500/10 text-green-500"
+                                : "bg-red-500/10 text-red-500"
+                            }`}
+                          >
+                            {order.side}
+                          </span>
+                        </div>
+                        <div className="px-4 py-3 font-mono text-white/60 w-16">
+                          {order.quantity}
+                        </div>
+                        <div className="px-4 py-3 font-mono text-white/60 w-24">
+                          ${order.price.toFixed(2)}
+                        </div>
+                        <div className="px-4 py-3 w-20">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[9px] font-black inline-block ${
+                              order.status === "ACCEPTED"
+                                ? "bg-green-500/10 text-green-500"
+                                : order.status === "PENDING"
+                                ? "bg-blue-500/10 text-blue-400"
+                                : "bg-red-500/10 text-red-400"
+                            }`}
+                          >
+                            {order.status}
+                          </span>
+                        </div>
+                        <div className="px-4 py-3 text-white/40 text-[9px] flex-1 truncate">
+                          {order.message || "-"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </div>
         ) : null}

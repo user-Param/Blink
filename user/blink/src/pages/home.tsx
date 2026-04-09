@@ -11,7 +11,11 @@ import {
 } from "lucide-react";
 import { useWebSocket } from "../hooks/useWebSocket";
 
-const Home = () => {
+interface HomeProps {
+  setActivePage: (page: string) => void;
+}
+
+const Home = ({ setActivePage }: HomeProps) => {
     const { isConnected, marketData, subscribe } = useWebSocket();
 
     useEffect(() => {
@@ -62,10 +66,10 @@ const Home = () => {
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
-                        <button className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold transition-all shadow-lg shadow-[#FF6D1F]/20 flex items-center justify-center gap-2 group">
+                        <button onClick={() => setActivePage("research")} className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold transition-all shadow-lg shadow-[#FF6D1F]/20 flex items-center justify-center gap-2 group">
                             Start Researching <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                         </button>
-                        <button className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10 transition-all flex items-center justify-center gap-2">
+                        <button onClick={() => setActivePage("docs")} className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10 transition-all flex items-center justify-center gap-2">
                             View Documentation
                         </button>
                     </div>

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "ollama": "^0.6.3"
+    "ollama": "^0.6.3",
+    "react-window": "^2.2.7"
   }
 }
