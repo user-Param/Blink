@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <chrono>
 
 using json = nlohmann::json;
 
@@ -134,8 +135,8 @@ void BinanceExchange::sendOrder(const OrderRequest& order) {
     std::string auth_header = "X-MBX-APIKEY: " + api_key_;
     headers = curl_slist_append(headers, auth_header.c_str());
     
-    std::cout << "[Binance] Sending order: " << order.symbol << " " << order.side 
-              << " " << order.quantity << " @ " << order.price << std::endl;
+    // std::cout << "[Binance] Sending order: " << order.symbol << " " << order.side 
+    //           << " " << order.quantity << " @ " << order.price << std::endl;
     
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -160,12 +161,10 @@ void BinanceExchange::sendOrder(const OrderRequest& order) {
 void BinanceExchange::processOrderResponse(const nlohmann::json& response, const OrderRequest& original_order) {
     try {
         if (response.contains("code")) {
-            // Error response
             std::string error_msg = response.value("msg", "Unknown error");
             std::cout << "[Binance] Order error: " << error_msg << std::endl;
             notifyResponse(original_order.order_id, "REJECTED", error_msg);
         } else if (response.contains("orderId")) {
-            // Success response
             std::string binance_order_id = std::to_string(response["orderId"].get<long>());
             std::string status = response.value("status", "");
             std::cout << "[Binance] ✓ Order placed successfully" << std::endl;
@@ -173,7 +172,7 @@ void BinanceExchange::processOrderResponse(const nlohmann::json& response, const
             std::cout << "  Status: " << status << std::endl;
             notifyResponse(original_order.order_id, "ACCEPTED", "Order ID: " + binance_order_id);
         } else {
-            std::cerr << "[Binance] Unexpected response format" << std::endl;
+            //std::cerr << "[Binance] Unexpected response format" << std::endl;
             notifyResponse(original_order.order_id, "ERROR", "Unexpected response format");
         }
     } catch (const std::exception& e) {
@@ -186,6 +185,60 @@ json BinanceExchange::parseResponse(const std::string& response) {
     try {
         return json::parse(response);
     } catch (...) {
+        return json::object();
+    }
+}
+
+json BinanceExchange::getAccountInfo() {
+    if (!connected_) {
+        std::cerr << "[Binance] Not connected to exchange" << std::endl;
+        return json::object();
+    }
+
+    CURL* curl = curl_easy_init();
+    if (!curl) {
+        std::cerr << "[Binance] Failed to initialize CURL" << std::endl;
+        return json::object();
+    }
+
+    try {
+        auto now = std::chrono::system_clock::now();
+        long timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch()).count();
+
+        std::string query_string = "timestamp=" + std::to_string(timestamp);
+        std::string signature = generateSignature(query_string);
+        
+        std::string url = base_url_ + "/account?" + query_string + "&signature=" + signature;
+        std::string response;
+
+        struct curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded");
+        std::string auth_header = "X-MBX-APIKEY: " + api_key_;
+        headers = curl_slist_append(headers, auth_header.c_str());
+
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeCallback);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+
+        CURLcode res = curl_easy_perform(curl);
+
+        json result;
+        if (res == CURLE_OK) {
+            result = parseResponse(response);
+        } else {
+            std::cerr << "[Binance] Account info request failed: " << curl_easy_strerror(res) << std::endl;
+        }
+
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+
+        return result;
+    } catch (const std::exception& e) {
+        //std::cerr << "[Binance] Exception in getAccountInfo: " << e.what() << std::endl;
+        curl_easy_cleanup(curl);
         return json::object();
     }
 }

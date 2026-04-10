@@ -3,7 +3,10 @@
 
 #include <string>
 #include <functional>
-#include "../adapter/oadapter.h"   
+#include <nlohmann/json.hpp>
+#include "../adapter/oadapter.h"
+
+using json = nlohmann::json;   
 
 using OrderCallback = std::function<void(const std::string& order_id,
                                          const std::string& status,
@@ -18,6 +21,7 @@ public:
     virtual bool isConnected() const = 0;
     virtual void sendOrder(const OrderRequest& order) = 0;
     virtual std::string getId() const = 0;
+    virtual json getAccountInfo() = 0;
 
     void setCallback(OrderCallback cb) { callback_ = std::move(cb); }
 

@@ -42,7 +42,7 @@ export const Trade = () => {
                 </div>
 
                 {/* Right: Control Panel Only */}
-                <div className="w-96 shrink-0">
+                <div className=" shrink-0">
                     <TradeControlPanel marketData={marketData} sendMessage={sendMessage} />
                 </div>
 

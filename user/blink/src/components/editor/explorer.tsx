@@ -17,14 +17,137 @@ const Explorer = ({ files, setFiles, activeFileId, setActiveFileId }: Props) => 
     
     let content = "";
     if (language === "cpp") {
-        content = `#include "algo.h"\n\nclass MyStrategy : public Algo {\npublic:\n    void onTick(const MarketData& md) override {\n        // Your optimized C++ logic here\n    }\n};`;
+        content = `#include <iostream>
+#include <string>
+#include <map>
+#include <vector>
+
+// Strategy Configuration
+struct MarketData {
+    double price;
+    double bid;
+    double ask;
+    std::string symbol;
+    long timestamp;
+};
+
+// Algo Base Class (simplified)
+class Algo {
+public:
+    virtual ~Algo() = default;
+    virtual void onTick(const MarketData& md) = 0;
+};
+
+// Your Strategy Implementation
+class MyStrategy : public Algo {
+private:
+    std::string symbol_;
+    double lastPrice_;
+    
+public:
+    MyStrategy(const std::string& symbol) 
+        : symbol_(symbol), lastPrice_(0.0) {}
+    
+    void onTick(const MarketData& md) override {
+        // Your optimized C++ trading logic here
+        if (md.price > lastPrice_ * 1.01) {
+            std::cout << "Price spike detected! Buy signal" << std::endl;
+        } else if (md.price < lastPrice_ * 0.99) {
+            std::cout << "Price drop detected! Sell signal" << std::endl;
+        }
+        lastPrice_ = md.price;
+    }
+};
+
+// Test the strategy
+int main() {
+    MyStrategy strategy("BTCUSDT");
+    
+    // Simulate market data
+    MarketData md = {.price = 50000, .bid = 49999, .ask = 50001, .symbol = "BTCUSDT", .timestamp = 0};
+    strategy.onTick(md);
+    
+    std::cout << "Strategy compiled and executed successfully!" << std::endl;
+    return 0;
+}`;
     } else if (language === "ipynb") {
         content = JSON.stringify([
-            { id: "c1", type: "markdown", content: "# New Research\nDescribe your hypothesis here." },
-            { id: "c2", type: "code", content: "# Start researching\nimport pandas as pd", output: "" }
+            { id: "c1", type: "markdown", content: "# Research Notebook\n\nDocument your hypothesis and analysis here." },
+            { id: "c2", type: "code", content: "# Data Analysis\nimport pandas as pd\nimport numpy as np\n\n# Load market data\nprint('Research environment initialized')\nprint('Ready for data analysis')", output: "" }
         ]);
     } else {
-        content = "# Python Strategy Implementation\nimport time\n\ndef main():\n    pass";
+        content = `# Python Strategy Implementation
+# ==============================
+
+import time
+from typing import Optional
+
+class StrategyConfig:
+    """Strategy configuration"""
+    SYMBOL = "BTCUSDT"
+    BUY_THRESHOLD = 1.01   # 1% above last price
+    SELL_THRESHOLD = 0.99  # 1% below last price
+    POSITION_SIZE = 1.0
+    
+class MarketData:
+    """Market data structure"""
+    def __init__(self, price, bid, ask, symbol, timestamp=None):
+        self.price = price
+        self.bid = bid
+        self.ask = ask
+        self.symbol = symbol
+        self.timestamp = timestamp or int(time.time() * 1000)
+
+class SimpleStrategy:
+    """Simple trading strategy"""
+    
+    def __init__(self):
+        self.last_price = None
+        self.position = 0
+        
+    def on_tick(self, market_data: MarketData) -> Optional[str]:
+        """
+        Called on each market tick
+        Returns: "BUY", "SELL", or None
+        """
+        if self.last_price is None:
+            self.last_price = market_data.price
+            return None
+        
+        # Simple momentum strategy
+        price_change = market_data.price / self.last_price
+        
+        if price_change > StrategyConfig.BUY_THRESHOLD:
+            print(f"📈 BUY signal at {market_data.price}")
+            self.position = StrategyConfig.POSITION_SIZE
+            self.last_price = market_data.price
+            return "BUY"
+        
+        elif price_change < StrategyConfig.SELL_THRESHOLD and self.position > 0:
+            print(f"📉 SELL signal at {market_data.price}")
+            self.position = 0
+            self.last_price = market_data.price
+            return "SELL"
+        
+        self.last_price = market_data.price
+        return None
+
+def main():
+    """Test the strategy"""
+    strategy = SimpleStrategy()
+    
+    # Simulate market data
+    test_prices = [50000, 50500, 51000, 50800, 50300]
+    
+    for price in test_prices:
+        md = MarketData(price=price, bid=price-1, ask=price+1, symbol="BTCUSDT")
+        signal = strategy.on_tick(md)
+        print(f"Price: {price}, Signal: {signal}, Position: {strategy.position}")
+    
+    print("\\n✅ Strategy executed successfully!")
+
+if __name__ == "__main__":
+    main()`;
     }
 
     const newFile: FileType = { id, name, content, language, path };

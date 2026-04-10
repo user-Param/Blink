@@ -19,6 +19,7 @@ public:
     bool isConnected() const override;
     void sendOrder(const OrderRequest& order) override;
     std::string getId() const override { return "binance"; }
+    json getAccountInfo() override;
 
 private:
     std::string api_key_;

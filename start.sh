@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# Get project root directory
 PROJECT_ROOT=$(pwd)
 
-# Kill any existing processes on port 9000 and 9001 to avoid conflicts
-echo "Cleaning up old processes on port 9000 and 9001..."
+echo "Cleaning up old processes..."
 lsof -ti:9000 | xargs kill -9 2>/dev/null || true
 lsof -ti:9001 | xargs kill -9 2>/dev/null || true
 sleep 1
@@ -42,6 +40,31 @@ if [ ! -d "build" ]; then mkdir build; fi
 cd build && cmake .. && make -j4
 ./engine &
 ENGINE_PID=$!
+
+#!/bin/bash
+# Start the Research Executor Backend
+
+echo "Starting BLINK Research Executor Backend..."
+echo ""
+
+# Check if Python is available
+if ! command -v python3 &> /dev/null; then
+    echo "Error: Python 3 is not installed"
+    exit 1
+fi
+
+# Install Flask if needed
+echo "Checking dependencies..."
+pip3 install Flask flask-cors 2>&1 | grep -E "Successfully|already|Requirement"
+
+echo ""
+echo "Launching Research Executor on http://localhost:5000"
+echo ""
+
+# Start the backend
+cd /Users/param/Documents/BLINK
+python3 research_executor.py
+
 
 # 5. Start Frontend
 echo "Starting React frontend..."

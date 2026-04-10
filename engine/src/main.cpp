@@ -16,12 +16,12 @@ public:
         if (last_price_ > 0) {
             // If price drops by more than 0.5, Buy
             if (data.price < last_price_ - 0.5) {
-                std::cout << "[Algo] Price Drop! Attempting to BUY." << std::endl;
+                //std::cout << "[Algo] Price Drop! Attempting to BUY." << std::endl;
                 buy(data.symbol, data.price, 1);
             }
             // If price rises by more than 0.5, Sell
             else if (data.price > last_price_ + 0.5) {
-                std::cout << "[Algo] Price Spike! Attempting to SELL." << std::endl;
+                //std::cout << "[Algo] Price Spike! Attempting to SELL." << std::endl;
                 sell(data.symbol, data.price, 1);
             }
         }

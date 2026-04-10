@@ -39,9 +39,9 @@ void RiskManager::connectExecutor() {
                         auto response = nlohmann::json::parse(msg);
                         if (response.contains("type")) {
                             if (response["type"] == "order_result") {
-                                std::cout << "[RiskManager] 📊 Order Result - ID: " << response["order_id"] 
-                                         << " | Status: " << response["status"] 
-                                         << " | Strategy: " << response["strategy_id"] << std::endl;
+                                // std::cout << "[RiskManager] Order Result - ID: " << response["order_id"] 
+                                //          << " | Status: " << response["status"] 
+                                //          << " | Strategy: " << response["strategy_id"] << std::endl;
                             } else {
                                 std::cout << "[RiskManager] Feedback: " << msg << std::endl;
                             }
@@ -56,7 +56,7 @@ void RiskManager::connectExecutor() {
         }).detach();
         
     } catch (const std::exception& e) {
-        std::cerr << "[RiskManager] ❌ Failed to connect to Executor: " << e.what() << std::endl;
+        std::cerr << "[RiskManager] Failed to connect to Executor: " << e.what() << std::endl;
         connected_ = false;
     }
 }
@@ -65,7 +65,7 @@ bool RiskManager::validateAndSend(const std::string& symbol, double price, int q
                                  const std::string& side, const std::string& strategy_id) {
     // 1. Perform Risk Checks
     if (quantity <= 0) {
-        std::cerr << "[RiskManager] ❌ Rejected: Invalid quantity " << quantity << std::endl;
+        //std::cerr << "[RiskManager] Rejected: Invalid quantity " << quantity << std::endl;
         return false;
     }
     
@@ -87,16 +87,16 @@ bool RiskManager::validateAndSend(const std::string& symbol, double price, int q
     if (connected_ && ws_->is_open()) {
         try {
             ws_->write(net::buffer(order.dump()));
-            std::cout << "[RiskManager] ✓ Order sent [" << strategy_id << "]: " 
-                      << symbol << " " << side << " " << quantity << " @ $" << price << std::endl;
+            // std::cout << "[RiskManager] ✓ Order sent [" << strategy_id << "]: " 
+            //           << symbol << " " << side << " " << quantity << " @ $" << price << std::endl;
             return true;
         } catch (const std::exception& e) {
-            std::cerr << "[RiskManager] ❌ Send error: " << e.what() << std::endl;
+            std::cerr << "[RiskManager] Send error: " << e.what() << std::endl;
             connected_ = false;
             return false;
         }
     } else {
-        std::cerr << "[RiskManager] ❌ Not connected to Executor" << std::endl;
+        std::cerr << "[RiskManager] Not connected to Executor" << std::endl;
         return false;
     }
 }

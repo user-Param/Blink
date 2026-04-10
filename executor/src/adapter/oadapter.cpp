@@ -32,7 +32,7 @@ void OAdapter::setExchange(const std::string& exchange_id) {
         auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
         
-        std::cout << "[OAdapter] Order Response: " << order_id << " | Status: " << status << " | " << message << std::endl;
+        //std::cout << "[OAdapter] Order Response: " << order_id << " | Status: " << status << " | " << message << std::endl;
         
         // Look up the original order to get all details
         if (pending_orders_.count(order_id)) {
@@ -72,9 +72,9 @@ void OAdapter::unregisterStrategy(const std::string& strategy_id) {
 }
 
 void OAdapter::onOrderSignal(const OrderRequest& order) {
-    std::cout << "\n[OAdapter] 📤 Order from Strategy[" << order.strategy_id << "]: "
-              << order.symbol << " " << order.side << " " << order.quantity
-              << " @ $" << order.price << std::endl;
+    // std::cout << "\n[OAdapter] 📤 Order from Strategy[" << order.strategy_id << "]: "
+    //           << order.symbol << " " << order.side << " " << order.quantity
+    //           << " @ $" << order.price << std::endl;
 
     // Store pending order
     OrderResult pending{
@@ -130,7 +130,7 @@ void OAdapter::sendOrder(const OrderRequest& order) {
     if (exchange_ && exchange_->isConnected()) {
         exchange_->sendOrder(order);
     } else {
-        std::cerr << "[OAdapter] ❌ Cannot send order - exchange not connected" << std::endl;
+        std::cerr << "[OAdapter] Cannot send order - exchange not connected" << std::endl;
         OrderResult error_result{
             order.order_id,
             order.strategy_id,
@@ -164,7 +164,7 @@ void OAdapter::broadcastOrderResult(const OrderResult& result) {
     };
     
     std::string response = result_msg.dump();
-    std::cout << "[OAdapter] 📥 Broadcasting result to " << ui_clients_.size() << " clients" << std::endl;
+    //std::cout << "[OAdapter] Broadcasting result to " << ui_clients_.size() << " clients" << std::endl;
     
     // Broadcast to all connected UI clients
     {
@@ -252,6 +252,23 @@ void OAdapter::handleSession(tcp::socket socket) {
                                 {"message", "Order received by executor"}
                             };
                             ws_ptr->write(net::buffer(ack.dump()));
+                            
+                        } else if (j["type"] == "get_account_info") {
+                            // Get account info from exchange
+                            if (exchange_) {
+                                auto account_info = exchange_->getAccountInfo();
+                                json response = {
+                                    {"type", "account_info"},
+                                    {"data", account_info}
+                                };
+                                ws_ptr->write(net::buffer(response.dump()));
+                            } else {
+                                json error = {
+                                    {"type", "account_info"},
+                                    {"error", "Exchange not initialized"}
+                                };
+                                ws_ptr->write(net::buffer(error.dump()));
+                            }
                             
                         } else if (j["type"] == "register_strategy") {
                             std::string strategy_id = j.value("strategy_id", "");
