@@ -22,7 +22,6 @@ add_executable(executor
     main.cpp
     src/adapter/oadapter.cpp
     src/exchange/exchange1.cpp
-    src/exchange/binance_exchange.cpp
 )
 
 # Link libraries

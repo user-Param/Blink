@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, X, Upload, Play, Database, FileText } from "lucide-react";
+import { Plus, X, Upload, Play, Database, FileText, Activity, TrendingUp, TrendingDown, BarChart3, Download } from "lucide-react";
 import SimulateCard from "./simulate-card";
 import { useWebSocket } from "../../hooks/useWebSocket";
 
@@ -18,6 +18,10 @@ const Simulate = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
     const [selectedStrategy, setSelectedStrategy] = useState("Trend Follower");
+    const [showBacktestOverlay, setShowBacktestOverlay] = useState(false);
+    const [initialCapital, setInitialCapital] = useState<number>(10000);
+    const [backtestResults, setBacktestResults] = useState<any>(null);
+    const [isBacktestRunning, setIsBacktestRunning] = useState<boolean>(false);
 
     // Default datasets
     const [datasets, setDatasets] = useState<Dataset[]>([
@@ -42,8 +46,10 @@ const Simulate = () => {
     });
 
     useEffect(() => {
-        // Subscribe to consolidated market data
-        subscribe("ticker_");
+        // Subscribe to backtest market data
+        subscribe("backtest_price_");
+        subscribe("backtest_bid_");
+        subscribe("backtest_ask_");
     }, [subscribe]);
 
     const handleAddDataset = (e: React.FormEvent) => {
@@ -62,6 +68,50 @@ const Simulate = () => {
         setFormData({ title: "", description: "", instrument: "", timeframe: "", file: null });
     };
 
+    const downloadBacktestResults = () => {
+        if (!backtestResults) return;
+        
+        const csvRows = [
+            ["Metric", "Value"],
+            ...Object.entries(backtestResults).map(([key, value]) => [
+                key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+                `"${value}"`
+            ])
+        ];
+        
+        const csvContent = csvRows.map(row => row.join(",")).join("\n");
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `backtest_results_${Date.now()}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const generateMockBacktestResults = (capital: number) => {
+        const profit = capital * 0.1542;
+        return {
+            totalReturn: "15.42%",
+            totalPnL: `$${profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            maxDrawdown: "4.21%",
+            sharpeRatio: "1.85",
+            winRate: "64.5%",
+            profitFactor: "1.62",
+            totalTrades: "42",
+            winningTrades: "27",
+            losingTrades: "15",
+            avgWin: `$${(profit * 1.2 / 27).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            avgLoss: `$${(profit * 0.4 / 15).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            maxProfit: `$${(profit * 0.35).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            maxLoss: `$${(profit * 0.22).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            totalFees: `$${(capital * 0.001).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            finalEquity: `$${(capital + profit - (capital * 0.001)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        };
+    };
+
     const startBacktest = () => {
         if (!selectedDatasetId) {
             alert("Please select a dataset first");
@@ -73,8 +123,19 @@ const Simulate = () => {
         sendMessage(JSON.stringify({
             mode: "_Backtest",
             strategy: selectedStrategy,
-            dataset: dataset?.fileName
+            dataset: dataset?.fileName,
+            capital: initialCapital
         }));
+
+        setIsBacktestRunning(true);
+        setShowBacktestOverlay(true);
+        setBacktestResults(null);
+
+        setTimeout(() => {
+            const mockResults = generateMockBacktestResults(initialCapital);
+            setBacktestResults(mockResults);
+            setIsBacktestRunning(false);
+        }, 3000);
     };
 
     return (
@@ -101,6 +162,19 @@ const Simulate = () => {
                             <option>Scalping Algo</option>
                             <option>MACD Crossover</option>
                         </select>
+                    </div>
+
+                    <div className="h-6 w-px bg-white/10"></div>
+                    <div className="flex items-center gap-3">
+                        <span className="text-white/40 text-xs uppercase tracking-wider font-medium">Capital</span>
+                        <input
+                            type="number"
+                            min="0"
+                            step="1000"
+                            value={initialCapital}
+                            onChange={(e) => setInitialCapital(parseFloat(e.target.value) || 0)}
+                            className="w-28 bg-[#1e1e1e] border border-white/10 text-white text-xs rounded px-3 py-1.5 focus:outline-none focus:border-[#FF6D1F]"
+                        />
                     </div>
                 </div>
 
@@ -276,6 +350,107 @@ const Simulate = () => {
                                 Add Dataset
                             </button>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Backtest Overlay */}
+            {showBacktestOverlay && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-[70%] max-w-4xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-white/5">
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Activity size={20} className="text-[#FF6D1F]" />
+                                {isBacktestRunning ? "Running Backtest" : "Backtest Results"}
+                            </h3>
+                            <button
+                                onClick={() => { setShowBacktestOverlay(false); setBacktestResults(null); }}
+                                className="text-white/30 hover:text-white transition-colors"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {isBacktestRunning ? (
+                            <div className="p-12 space-y-6">
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    <div className="w-16 h-16 rounded-full bg-[#FF6D1F]/10 flex items-center justify-center mb-6 animate-pulse">
+                                        <Activity size={32} className="text-[#FF6D1F]" />
+                                    </div>
+                                    <h4 className="text-white text-xl font-bold mb-2">Backtest is in progress...</h4>
+                                    <p className="text-white/40 text-sm max-w-sm">
+                                        Please wait while the system processes the historical data using the selected parameters.
+                                    </p>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-6 pt-6">
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                        <p className="text-white/30 text-[10px] uppercase font-bold mb-1 tracking-wider">Strategy</p>
+                                        <p className="text-white font-medium">{selectedStrategy}</p>
+                                    </div>
+                                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                        <p className="text-white/30 text-[10px] uppercase font-bold mb-1 tracking-wider">Dataset</p>
+                                        <p className="text-white font-medium">{datasets.find(d => d.id === selectedDatasetId)?.title || "Unknown"}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : backtestResults && (
+                            <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
+                                {/* Revenue Chart Placeholder */}
+                                <div className="w-full h-48 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 flex items-center justify-center">
+                                    <div className="flex flex-col items-center gap-2 text-white/20">
+                                        <BarChart3 size={32} />
+                                        <span className="text-sm font-medium">Revenue Chart (Mock)</span>
+                                    </div>
+                                </div>
+
+                                {/* Metrics Grid */}
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                                    {[
+                                        { label: "Total Return", value: backtestResults.totalReturn, color: "text-green-400", icon: TrendingUp },
+                                        { label: "Total P&L", value: backtestResults.totalPnL, color: "text-green-400" },
+                                        { label: "Max Drawdown", value: backtestResults.maxDrawdown, color: "text-red-400", icon: TrendingDown },
+                                        { label: "Sharpe Ratio", value: backtestResults.sharpeRatio },
+                                        { label: "Win Rate", value: backtestResults.winRate },
+                                        { label: "Profit Factor", value: backtestResults.profitFactor },
+                                        { label: "Total Trades", value: backtestResults.totalTrades },
+                                        { label: "Winning Trades", value: backtestResults.winningTrades, color: "text-green-400" },
+                                        { label: "Losing Trades", value: backtestResults.losingTrades, color: "text-red-400" },
+                                        { label: "Avg Win", value: backtestResults.avgWin },
+                                        { label: "Avg Loss", value: backtestResults.avgLoss },
+                                        { label: "Max Profit", value: backtestResults.maxProfit },
+                                        { label: "Max Loss", value: backtestResults.maxLoss },
+                                        { label: "Total Fees", value: backtestResults.totalFees },
+                                        { label: "Final Equity", value: backtestResults.finalEquity, color: "text-[#FF6D1F]" }
+                                    ].map((m, idx) => (
+                                        <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                {m.icon && <m.icon size={12} className="text-[#FF6D1F]/60" />}
+                                                <p className="text-white/30 text-[10px] uppercase font-bold tracking-wider">{m.label}</p>
+                                            </div>
+                                            <p className={`font-mono font-bold ${m.color || "text-white"}`}>{m.value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="p-6 border-t border-white/5 flex justify-end">
+                            {backtestResults && (
+                                <button
+                                    onClick={downloadBacktestResults}
+                                    className="bg-[#FF6D1F] hover:bg-[#e55d1a] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all mr-3 flex items-center gap-2"
+                                >
+                                    <Download size={16} /> Download Results
+                                </button>
+                            )}
+                            <button
+                                onClick={() => { setShowBacktestOverlay(false); setBacktestResults(null); }}
+                                className="bg-white/5 hover:bg-white/10 text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-colors border border-white/10"
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

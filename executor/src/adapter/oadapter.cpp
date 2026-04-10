@@ -7,7 +7,8 @@
 #include <algorithm>
 #include <chrono>
 
-std::unique_ptr<BaseExchange> createBinanceExchange();
+std::unique_ptr<BaseExchange> createExchange(const std::string& id);
+
 
 OAdapter::OAdapter() {}
 
@@ -19,7 +20,7 @@ void OAdapter::setExchange(const std::string& exchange_id) {
     exchange_id_ = exchange_id;
 
     if (exchange_id == "binance") {
-        exchange_ = createBinanceExchange();
+        exchange_ = createExchange(exchange_id);
     } else {
         std::cerr << "[OAdapter] Unknown exchange: " << exchange_id << std::endl;
         return;
@@ -72,7 +73,7 @@ void OAdapter::unregisterStrategy(const std::string& strategy_id) {
 }
 
 void OAdapter::onOrderSignal(const OrderRequest& order) {
-    // std::cout << "\n[OAdapter] 📤 Order from Strategy[" << order.strategy_id << "]: "
+    // std::cout << "\n[OAdapter] Order from Strategy[" << order.strategy_id << "]: "
     //           << order.symbol << " " << order.side << " " << order.quantity
     //           << " @ $" << order.price << std::endl;
 
@@ -96,13 +97,13 @@ void OAdapter::onOrderSignal(const OrderRequest& order) {
 
 void OAdapter::run() {
     if (!exchange_) {
-        std::cerr << "[OAdapter] ❌ No exchange set. Call setExchange() first." << std::endl;
+        std::cerr << "[OAdapter] No exchange set. Call setExchange() first." << std::endl;
         return;
     }
 
     exchange_->connect();
     if (!exchange_->isConnected()) {
-        std::cerr << "[OAdapter] ❌ Failed to connect to exchange: " << exchange_id_ << std::endl;
+        std::cerr << "[OAdapter] Failed to connect to exchange: " << exchange_id_ << std::endl;
         return;
     }
 
