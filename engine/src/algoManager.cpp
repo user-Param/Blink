@@ -29,6 +29,10 @@ void AlgoManager::onTick(const MarketData& data) {
 
 bool AlgoManager::sendOrder(const std::string& symbol, double price, int quantity, 
                            const std::string& side, const std::string& strategy_id) {
+    if (order_callback_) {
+        order_callback_(symbol, price, quantity, side, strategy_id);
+    }
+    
     if (riskManager_) {
         return riskManager_->validateAndSend(symbol, price, quantity, side, strategy_id);
     }

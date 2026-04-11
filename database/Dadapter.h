@@ -52,7 +52,7 @@ public:
     // Database Queries
     nlohmann::json get_profile(const std::string& username);
     void save_strategy(const nlohmann::json& strategy_data);
-    std::vector<nlohmann::json> get_all_strategies();
+    nlohmann::json get_all_strategies();
     
     // Core logic
     void run();

@@ -12,6 +12,8 @@ import json
 import tempfile
 import os
 import sys
+import ast
+import re
 from pathlib import Path
 
 app = Flask(__name__)
@@ -20,6 +22,99 @@ CORS(app)
 # Strategy storage directory
 STRATEGY_DIR = Path("/Users/param/Documents/BLINK/user/blink/strategies")
 STRATEGY_DIR.mkdir(exist_ok=True)
+
+@app.route('/validate', methods=['POST'])
+def validate_code():
+    """Validate strategy code before saving"""
+    try:
+        data = request.json
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        
+        if not code:
+            return jsonify({'valid': False, 'error': 'No code provided'}), 400
+            
+        if language == 'python':
+            return validate_python(code)
+        elif language == 'cpp':
+            return validate_cpp(code)
+        elif language == 'ipynb':
+            return validate_ipynb(code)
+        else:
+            return jsonify({'valid': False, 'error': f'Unsupported language: {language}'}), 400
+            
+    except Exception as e:
+        return jsonify({'valid': False, 'error': str(e)}), 500
+
+def validate_python(code):
+    try:
+        tree = ast.parse(code)
+        has_class = False
+        has_on_tick = False
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ClassDef):
+                has_class = True
+                for subnode in node.body:
+                    if isinstance(subnode, ast.FunctionDef) and subnode.name == 'on_tick':
+                        has_on_tick = True
+                        break
+        
+        if not has_class:
+            return jsonify({'valid': False, 'error': 'Missing strategy class.'})
+        if not has_on_tick:
+            return jsonify({'valid': False, 'error': "Missing 'on_tick' method."})
+            
+        return jsonify({'valid': True})
+    except SyntaxError as e:
+        return jsonify({'valid': False, 'error': f'Syntax Error: {str(e)}'})
+    except Exception as e:
+        return jsonify({'valid': False, 'error': str(e)})
+
+def validate_cpp(code):
+    # Check for required symbols
+    if 'onTick' not in code:
+        return jsonify({'valid': False, 'error': "Missing 'onTick' method."})
+    if 'Algo' not in code:
+        return jsonify({'valid': False, 'error': "Strategy must inherit from 'Algo'."})
+        
+    # Attempt compilation
+    try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cpp_file = os.path.join(tmpdir, 'validate.cpp')
+            with open(cpp_file, 'w') as f:
+                f.write(code)
+            
+            result = subprocess.run(
+                ['clang++', '-std=c++17', '-fsyntax-only', cpp_file],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            
+            if result.returncode != 0:
+                return jsonify({'valid': False, 'error': f'Compilation Error:\n{result.stderr}'})
+                
+        return jsonify({'valid': True})
+    except Exception as e:
+        return jsonify({'valid': False, 'error': f'Validation failed: {str(e)}'})
+
+def validate_ipynb(code):
+    try:
+        notebook = json.loads(code)
+        python_code = ""
+        for cell in notebook:
+            if cell.get('type') == 'code':
+                python_code += cell.get('content', '') + "\n"
+        
+        if not python_code.strip():
+            return jsonify({'valid': False, 'error': 'No code cells found in notebook.'})
+            
+        # Basic syntax check on combined code
+        ast.parse(python_code)
+        return jsonify({'valid': True})
+    except Exception as e:
+        return jsonify({'valid': False, 'error': f'Invalid Notebook Format: {str(e)}'})
 
 @app.route('/run', methods=['POST'])
 def run_code():

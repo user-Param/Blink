@@ -21,6 +21,8 @@ add_executable(engine
     src/algo.cpp
     src/algoManager.cpp
     src/riskManager.cpp
+    src/algo/sma.cpp
+    src/algo/mean_reversion.cpp
     )
 
     

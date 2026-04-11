@@ -6,6 +6,8 @@
 #include "../include/riskManager.h"
 #include "../include/algo.h"
 #include "../include/engine.h"
+#include "../include/algo/sma.h"
+#include "../include/algo/mean_reversion.h"
 
 // A simple algorithm that places orders based on price movement
 class SimpleScalper : public Algo {
@@ -43,8 +45,10 @@ int main(int argc, char** argv)
         // 2. Initialize AlgoManager
         auto algoMgr = std::make_shared<AlgoManager>(riskMgr);
         
-        // 3. Add Algorithm
+        // 3. Add Algorithms
         algoMgr->addAlgo(std::make_unique<SimpleScalper>());
+        algoMgr->addAlgo(std::make_unique<SimpleMovingAverage>());
+        algoMgr->addAlgo(std::make_unique<MeanReversion>());
 
         // 4. Initialize Engine (Connects to Datafeed on 9000)
         Engine engine(algoMgr);

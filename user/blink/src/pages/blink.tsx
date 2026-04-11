@@ -3,7 +3,7 @@ import Navbar from "../components/navbar";
 import Home from "./home";
 import Editor from "./editor";
 import Simulate from "./simulate/simulate";
-import { Docs } from "./docs";
+import Docs from "./docs";
 import { Trade } from "./trade";
 import { Profile } from "./profile";
 

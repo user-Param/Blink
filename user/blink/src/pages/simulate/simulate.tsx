@@ -13,15 +13,23 @@ type Dataset = {
     fileName: string;
 };
 
+type Strategy = {
+    id: string;
+    name: string;
+    language: string;
+    content: string;
+};
+
 const Simulate = () => {
     const { isConnected, marketData, sendMessage, subscribe } = useWebSocket();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
-    const [selectedStrategy, setSelectedStrategy] = useState("Trend Follower");
+    const [selectedStrategyId, setSelectedStrategyId] = useState<string>("");
     const [showBacktestOverlay, setShowBacktestOverlay] = useState(false);
     const [initialCapital, setInitialCapital] = useState<number>(10000);
     const [backtestResults, setBacktestResults] = useState<any>(null);
     const [isBacktestRunning, setIsBacktestRunning] = useState<boolean>(false);
+    const [strategies, setStrategies] = useState<Strategy[]>([]);
 
     // Default datasets
     const [datasets, setDatasets] = useState<Dataset[]>([
@@ -50,7 +58,36 @@ const Simulate = () => {
         subscribe("backtest_price_");
         subscribe("backtest_bid_");
         subscribe("backtest_ask_");
-    }, [subscribe]);
+
+        // Request strategies from database
+        const fetchStrategies = () => {
+            if (isConnected) {
+                sendMessage(JSON.stringify({ request: "get_strategies" }));
+            }
+        };
+
+        fetchStrategies();
+    }, [subscribe, isConnected, sendMessage]);
+
+    // Handle WebSocket messages for strategies and results
+    useEffect(() => {
+        if (!marketData) return;
+
+        try {
+            const msg = marketData; // MarketData hook might actually return the last raw message or parsed JSON
+            if (msg.type === "db_response" && Array.isArray(msg.data)) {
+                setStrategies(msg.data);
+                if (msg.data.length > 0 && !selectedStrategyId) {
+                    setSelectedStrategyId(msg.data[0].id);
+                }
+            } else if (msg.type === "backtest_result") {
+                setBacktestResults(msg.results);
+                setIsBacktestRunning(false);
+            }
+        } catch (e) {
+            // Error parsing or not our message
+        }
+    }, [marketData, selectedStrategyId]);
 
     const handleAddDataset = (e: React.FormEvent) => {
         e.preventDefault();
@@ -91,38 +128,20 @@ const Simulate = () => {
         document.body.removeChild(link);
     };
 
-    const generateMockBacktestResults = (capital: number) => {
-        const profit = capital * 0.1542;
-        return {
-            totalReturn: "15.42%",
-            totalPnL: `$${profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            maxDrawdown: "4.21%",
-            sharpeRatio: "1.85",
-            winRate: "64.5%",
-            profitFactor: "1.62",
-            totalTrades: "42",
-            winningTrades: "27",
-            losingTrades: "15",
-            avgWin: `$${(profit * 1.2 / 27).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            avgLoss: `$${(profit * 0.4 / 15).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            maxProfit: `$${(profit * 0.35).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            maxLoss: `$${(profit * 0.22).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            totalFees: `$${(capital * 0.001).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-            finalEquity: `$${(capital + profit - (capital * 0.001)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        };
-    };
-
     const startBacktest = () => {
         if (!selectedDatasetId) {
             alert("Please select a dataset first");
             return;
         }
+        if (!selectedStrategyId) {
+            alert("Please select a strategy first");
+            return;
+        }
         const dataset = datasets.find(d => d.id === selectedDatasetId);
-        console.log(`Starting backtest with strategy: ${selectedStrategy} on dataset: ${dataset?.title}`);
-
+        
         sendMessage(JSON.stringify({
             mode: "_Backtest",
-            strategy: selectedStrategy,
+            strategy_id: selectedStrategyId,
             dataset: dataset?.fileName,
             capital: initialCapital
         }));
@@ -130,12 +149,6 @@ const Simulate = () => {
         setIsBacktestRunning(true);
         setShowBacktestOverlay(true);
         setBacktestResults(null);
-
-        setTimeout(() => {
-            const mockResults = generateMockBacktestResults(initialCapital);
-            setBacktestResults(mockResults);
-            setIsBacktestRunning(false);
-        }, 3000);
     };
 
     return (
@@ -153,14 +166,17 @@ const Simulate = () => {
                     <div className="flex items-center gap-3">
                         <span className="text-white/40 text-xs uppercase tracking-wider font-medium">Strategy</span>
                         <select
-                            value={selectedStrategy}
-                            onChange={(e) => setSelectedStrategy(e.target.value)}
+                            value={selectedStrategyId}
+                            onChange={(e) => setSelectedStrategyId(e.target.value)}
                             className="bg-[#1e1e1e] border border-white/10 text-white text-xs rounded px-3 py-1.5 focus:outline-none focus:border-[#FF6D1F]"
                         >
-                            <option>Trend Follower</option>
-                            <option>Mean Reversion</option>
-                            <option>Scalping Algo</option>
-                            <option>MACD Crossover</option>
+                            {strategies.length > 0 ? (
+                                strategies.map(s => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))
+                            ) : (
+                                <option value="" disabled>No strategies found</option>
+                            )}
                         </select>
                     </div>
 
@@ -193,9 +209,9 @@ const Simulate = () => {
 
                     <button
                         onClick={startBacktest}
-                        disabled={!selectedDatasetId}
+                        disabled={!selectedDatasetId || !selectedStrategyId}
                         className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                            selectedDatasetId
+                            selectedDatasetId && selectedStrategyId
                                 ? "bg-[#FF6D1F] hover:bg-[#e55d1a] text-white shadow-lg shadow-[#FF6D1F]/20"
                                 : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
                         }`}
@@ -386,7 +402,7 @@ const Simulate = () => {
                                 <div className="grid grid-cols-2 gap-6 pt-6">
                                     <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                         <p className="text-white/30 text-[10px] uppercase font-bold mb-1 tracking-wider">Strategy</p>
-                                        <p className="text-white font-medium">{selectedStrategy}</p>
+                                        <p className="text-white font-medium">{strategies.find(s => s.id === selectedStrategyId)?.name || "Unknown"}</p>
                                     </div>
                                     <div className="bg-white/5 p-4 rounded-xl border border-white/5">
                                         <p className="text-white/30 text-[10px] uppercase font-bold mb-1 tracking-wider">Dataset</p>
@@ -396,14 +412,6 @@ const Simulate = () => {
                             </div>
                         ) : backtestResults && (
                             <div className="p-8 space-y-8 overflow-y-auto max-h-[70vh]">
-                                {/* Revenue Chart Placeholder */}
-                                <div className="w-full h-48 bg-white/5 rounded-2xl border-2 border-dashed border-white/10 flex items-center justify-center">
-                                    <div className="flex flex-col items-center gap-2 text-white/20">
-                                        <BarChart3 size={32} />
-                                        <span className="text-sm font-medium">Revenue Chart (Mock)</span>
-                                    </div>
-                                </div>
-
                                 {/* Metrics Grid */}
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                                     {[

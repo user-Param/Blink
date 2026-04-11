@@ -214,7 +214,7 @@ void OAdapter::handleSession(tcp::socket socket) {
     try {
         ws_ptr->accept();
         
-        std::cout << "[OAdapter] ✓ Client connected" << std::endl;
+        //std::cout << "[OAdapter] ✓ Client connected" << std::endl;
         
         // Register this client for broadcasts
         {
@@ -313,5 +313,5 @@ void OAdapter::handleSession(tcp::socket socket) {
         );
     }
     
-    std::cout << "[OAdapter] Client disconnected" << std::endl;
+    //std::cout << "[OAdapter] Client disconnected" << std::endl;
 }

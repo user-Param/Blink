@@ -90,6 +90,27 @@ void Dadapter::save_strategy(const nlohmann::json& strategy_data) {
     }
 }
 
+nlohmann::json Dadapter::get_all_strategies() {
+    try {
+        pqxx::work W(*db_conn_);
+        pqxx::result R = W.exec("SELECT id, name, language, content FROM strategies");
+        
+        nlohmann::json strategies = nlohmann::json::array();
+        for (auto const &row : R) {
+            strategies.push_back({
+                {"id", row["id"].as<std::string>()},
+                {"name", row["name"].as<std::string>()},
+                {"language", row["language"].as<std::string>()},
+                {"content", row["content"].as<std::string>()}
+            });
+        }
+        return strategies;
+    } catch (const std::exception &e) {
+        std::cerr << "[PostgreSQL] Query error (get_all_strategies): " << e.what() << std::endl;
+    }
+    return nlohmann::json::array();
+}
+
 void Dadapter::stream_db_data() {
     try {
         pqxx::work W(*db_conn_);
@@ -176,7 +197,7 @@ void Dadapter::run() {
                         save_strategy(j["data"]);
                         response["status"] = "success";
                     } else if (req == "get_strategies") {
-                        // response["data"] = get_all_strategies(); // Implement if needed
+                        response["data"] = get_all_strategies();
                     }
 
                     ws_.write(net::buffer(response.dump()));

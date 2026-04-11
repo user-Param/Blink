@@ -30,6 +30,7 @@ public:
     void stop();
     void setTopics(const std::vector<std::string>& topics);
     void sendMode(const std::string& mode);
+    void handleCommand(const std::string& raw);
 
 
 private:
@@ -38,6 +39,7 @@ private:
     void readLoop();
     void onData(const std::string& raw);
     void subscribe(const std::string& topic);
+    void finalizeBacktest();
     
 
     std::shared_ptr<AlgoManager> algoManager_;
@@ -50,6 +52,23 @@ private:
 
     std::string host_ = "localhost";
     std::string port_ = "9000";
+
+    // Backtest State
+    bool is_backtesting_ = false;
+    double bt_capital_ = 10000.0;
+    double current_bt_capital_ = 10000.0;
+    double bt_equity_ = 10000.0;
+    double bt_max_equity_ = 10000.0;
+    double bt_max_drawdown_ = 0.0;
+    std::vector<double> bt_returns_;
+    struct BtTrade {
+        std::string symbol;
+        std::string side;
+        double price;
+        int quantity;
+        long timestamp;
+    };
+    std::vector<BtTrade> bt_trades_;
 };
 
 #endif
