@@ -45,24 +45,35 @@ const Home = ({ setActivePage }: HomeProps) => {
     return (
         <div className="min-h-screen bg-[#0a0a0a] text-white overflow-x-hidden">
             {/* Background Glow Effect */}
-            <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#FF6D1F]/10 rounded-full blur-[120px] pointer-events-none"></div>
-            <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+            {/* <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#FF6D1F]/10 rounded-full blur-[120px] pointer-events-none"></div>
+            <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none"></div> */}
 
             {/* Hero Section */}
             <div className="relative pt-20 pb-16 px-6 lg:pt-32 lg:pb-32">
                 <div className="max-w-7xl mx-auto text-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white/60 mb-8 animate-fade-in">
                         <span className="w-2 h-2 rounded-full bg-[#FF6D1F] animate-pulse"></span>
-                        Blink V2.0 is now live with enhanced C++ backend
+                        Blink V1.0 is now live
                     </div>
                     
-                    <h1 className="text-5xl lg:text-8xl font-black tracking-tight mb-8 leading-[1.1]">
-                        The Speed of <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-orange-400">Thought</span>.<br />
-                        The Precision of <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Code</span>.
-                    </h1>
+                    <h1 className="mb-8 font-black tracking-tight leading-[1.05]">
+  <span className="block text-5xl lg:text-8xl">
+    Research Backtest
+    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-orange-400">
+      {" "}Deploy
+    </span>
+  </span>
+
+  <span className="block mt-2 text-3xl lg:text-5xl font-black leading-[1.1]">
+    Unified Platform for{" "}
+    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">
+      Systematic Trading
+    </span>
+  </span>
+</h1>
                     
                     <p className="max-w-2xl mx-auto text-white/50 text-lg lg:text-xl mb-10 leading-relaxed">
-                        A high-frequency algorithmic trading platform built for the next generation of quantitative developers. Research, backtest, and deploy in one unified environment.
+                        A simulated market environment where you can design, test, and validate systematic trading strategies before deploying them to live markets.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
