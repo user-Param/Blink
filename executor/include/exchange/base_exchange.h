@@ -22,6 +22,7 @@ public:
     virtual void sendOrder(const OrderRequest& order) = 0;
     virtual std::string getId() const = 0;
     virtual json getAccountInfo() = 0;
+    virtual json getTradeHistory(const std::string& symbol = "") = 0;
 
     void setCallback(OrderCallback cb) { callback_ = std::move(cb); }
 

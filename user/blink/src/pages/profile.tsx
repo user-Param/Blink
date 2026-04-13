@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   User, 
   Settings, 
@@ -12,16 +12,42 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from "lucide-react";
+
 import { useAccountInfo } from "../hooks/useAccountInfo";
 import { useOrderTracking } from "../hooks/useOrderTracking";
 
 export const Profile = () => {
     const [activeTab, setActiveTab] = useState("overview");
     const { accountInfo, totalBalance, loading } = useAccountInfo();
-    const { orders } = useOrderTracking();
+    const { orders, summary } = useOrderTracking();
+    const [tradeHistory, setTradeHistory] = useState<any[]>([]);
 
-    const tradingStats = (() => {
-        if (!orders || orders.length === 0) {
+    useEffect(() => {
+        const fetchTradeHistory = () => {
+            const ws = new WebSocket('ws://localhost:9001');
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ type: 'get_trade_history', symbol: 'BTCUSDT' }));
+            };
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    if (message.type === 'trade_history' && Array.isArray(message.data)) {
+                        setTradeHistory(message.data);
+                    }
+                } catch (e) {
+                    console.error('Error fetching trade history:', e);
+                }
+                ws.close();
+            };
+        };
+        fetchTradeHistory();
+    }, []);
+
+    const tradingStats = useMemo(() => {
+        const allTrades = [...tradeHistory];
+        const totalTrades = allTrades.length;
+        
+        if (totalTrades === 0) {
             return [
                 { label: "Total Trades", value: "0" },
                 { label: "Win Rate", value: "0%", color: "text-gray-400" },
@@ -32,39 +58,58 @@ export const Profile = () => {
             ];
         }
 
-        const completedTrades = orders.filter((t: any) => t.status && (t.status.toUpperCase() === 'FILLED' || t.status.toUpperCase() === 'PARTIALLY_FILLED'));
-        const wins = completedTrades.filter((t: any) => {
-            const entryPrice = parseFloat(t.price || '0');
-            return entryPrice > 0;
-        }).length;
-        const winRate = completedTrades.length > 0 ? ((wins / completedTrades.length) * 100).toFixed(1) : "0";
-        const avgProfit = completedTrades.length > 0 ? (totalBalance / completedTrades.length).toFixed(2) : "0";
+        const winningTrades = allTrades.filter(t => parseFloat(t.realizedPnl || '0') > 0);
+        const winRate = ((winningTrades.length / totalTrades) * 100).toFixed(1);
+        
+        const totalProfit = allTrades.reduce((sum, t) => sum + parseFloat(t.realizedPnl || '0'), 0);
+        const totalLoss = Math.abs(allTrades.reduce((sum, t) => {
+            const pnl = parseFloat(t.realizedPnl || '0');
+            return pnl < 0 ? sum + pnl : sum;
+        }, 0));
+        
+        const profitFactor = totalLoss > 0 ? (totalProfit / totalLoss).toFixed(2) : totalProfit > 0 ? "MAX" : "0.00";
+        const avgProfit = (totalProfit / totalTrades).toFixed(2);
 
         return [
-            { label: "Total Trades", value: orders.length.toString() },
+            { label: "Total Trades", value: totalTrades.toString() },
             { label: "Win Rate", value: `${winRate}%`, color: parseFloat(winRate) >= 50 ? "text-green-400" : "text-red-400" },
-            { label: "Profit Factor", value: (totalBalance / 1000).toFixed(2) },
-            { label: "Avg. Profit", value: `$${avgProfit}`, color: "text-green-400" },
-            { label: "Max Drawdown", value: "12.4%", color: "text-red-400" },
-            { label: "Sharpe Ratio", value: "1.85" },
+            { label: "Profit Factor", value: profitFactor },
+            { label: "Avg. Profit", value: `$${avgProfit}`, color: parseFloat(avgProfit) >= 0 ? "text-green-400" : "text-red-400" },
+            { label: "Max Drawdown", value: "---", color: "text-gray-400" },
+            { label: "Sharpe Ratio", value: "---" },
         ];
-    })();
+    }, [tradeHistory]);
 
-    const recentTrades = !orders || orders.length === 0 
-        ? []
-        : orders
-            .slice()
-            .reverse()
+    const recentTrades = useMemo(() => {
+        if (tradeHistory.length > 0) {
+            return tradeHistory.slice(0, 10).map((trade, idx) => ({
+                id: trade.id || idx,
+                pair: trade.symbol,
+                side: trade.isBuyer ? 'BUY' : 'SELL',
+                amount: trade.qty,
+                pnl: `${parseFloat(trade.realizedPnl || '0') >= 0 ? '+' : ''}$${parseFloat(trade.realizedPnl || '0').toFixed(2)}`,
+                status: 'Filled',
+                time: new Date(trade.time).toLocaleTimeString(),
+            }));
+        }
+        
+        return orders
             .slice(0, 10)
             .map((trade: any, idx: number) => ({
                 id: idx,
-                pair: `${trade.symbol}`,
+                pair: trade.symbol,
                 side: trade.side?.toUpperCase() || 'BUY',
                 amount: trade.quantity?.toString() || '0',
-                pnl: `${trade.side === 'BUY' ? '-' : '+'}$${(Math.random() * 100).toFixed(2)}`,
-                status: trade.status === 'FILLED' ? 'Win' : 'Pending',
+                pnl: trade.status === 'ACCEPTED' ? 'Executing' : 'Pending',
+                status: trade.status === 'ACCEPTED' ? 'Filled' : 'Pending',
                 time: new Date(trade.timestamp || 0).toLocaleTimeString(),
             }));
+    }, [tradeHistory, orders]);
+
+    const monthlyChange = useMemo(() => {
+        // Placeholder for monthly change calculation if we had more history
+        return (summary.total_unrealized_pnl / (totalBalance || 1) * 100).toFixed(1);
+    }, [summary.total_unrealized_pnl, totalBalance]);
 
     return (
         <div className="h-full overflow-y-auto bg-[#0a0a0a] text-white p-6 pb-20">
@@ -116,7 +161,7 @@ export const Profile = () => {
                             </div>
                             <div className="flex items-center gap-2 text-sm bg-white/10 w-fit px-2 py-1 rounded">
                                 <ArrowUpRight size={14} />
-                                <span>{totalBalance > 0 ? '+' : '-'}{Math.abs(totalBalance * 0.065).toFixed(1)}% this month</span>
+                                <span>{parseFloat(monthlyChange) >= 0 ? '+' : ''}{monthlyChange}% from open positions</span>
                             </div>
                         </div>
 
@@ -205,17 +250,17 @@ export const Profile = () => {
                                                     <tr key={trade.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                                                         <td className="py-4 font-medium">{trade.pair}</td>
                                                         <td className="py-4">
-                                                            <span className={trade.side === "Buy" ? "text-blue-400" : "text-orange-400"}>
+                                                            <span className={trade.side === "BUY" ? "text-blue-400" : "text-orange-400"}>
                                                                 {trade.side}
                                                             </span>
                                                         </td>
-                                                        <td className={`py-4 font-mono ${trade.status === "Win" ? "text-green-400" : "text-red-400"}`}>
+                                                        <td className={`py-4 font-mono ${trade.status === "Filled" ? "text-green-400" : "text-red-400"}`}>
                                                             {trade.pnl}
                                                         </td>
                                                         <td className="py-4 text-white/50">{trade.time}</td>
                                                         <td className="py-4 text-right">
                                                             <div className="flex justify-end">
-                                                                {trade.status === "Win" ? (
+                                                                {trade.status === "Filled" ? (
                                                                     <CheckCircle2 size={18} className="text-green-500" />
                                                                 ) : (
                                                                     <XCircle size={18} className="text-red-500" />
@@ -236,7 +281,7 @@ export const Profile = () => {
                                         <div className="p-4 rounded-xl bg-green-500/5 border border-green-500/10 flex items-center justify-between">
                                             <div>
                                                 <p className="font-medium">Trend Follower V2</p>
-                                                <p className="text-xs text-green-500">Running • +2.4% Today</p>
+                                                <p className="text-xs text-green-500">Running • {parseFloat(monthlyChange) >= 0 ? '+' : ''}{monthlyChange}% Today</p>
                                             </div>
                                             <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
                                                 <TrendingUp size={20} className="text-green-500" />
@@ -245,7 +290,7 @@ export const Profile = () => {
                                         <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10 flex items-center justify-between">
                                             <div>
                                                 <p className="font-medium">Grid Bot (BTC)</p>
-                                                <p className="text-xs text-blue-500">Active • 12 trades open</p>
+                                                <p className="text-xs text-blue-500">Active • {summary.positions.length} trades open</p>
                                             </div>
                                             <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                                                 <History size={20} className="text-blue-500" />

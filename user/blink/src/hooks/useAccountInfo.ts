@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface Balance {
   asset: string;
@@ -25,12 +25,22 @@ export const useAccountInfo = () => {
   const [totalBalance, setTotalBalance] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const retryCount = useRef(0);
+  const maxRetries = 3;
 
   useEffect(() => {
     const fetchAccountInfo = () => {
+      // Close existing connection before opening a new one
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+
       const ws = new WebSocket('ws://localhost:9001');
+      wsRef.current = ws;
 
       ws.onopen = () => {
+        retryCount.current = 0; // Reset on success
         ws.send(JSON.stringify({ type: 'get_account_info' }));
       };
 
@@ -54,7 +64,6 @@ export const useAccountInfo = () => {
                 const total = parseFloat(usdt.free) + parseFloat(usdt.locked);
                 setTotalBalance(total);
               } else {
-                // If no USDT, show 0
                 setTotalBalance(0);
               }
               
@@ -67,28 +76,32 @@ export const useAccountInfo = () => {
         }
         setLoading(false);
         ws.close();
+        wsRef.current = null;
       };
 
       ws.onerror = (err) => {
         console.error('WebSocket error:', err);
-        setError('Failed to fetch account info');
-        setLoading(false);
-      };
-
-      return () => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.close();
+        if (retryCount.current < maxRetries) {
+          retryCount.current++;
+          const backoff = Math.pow(2, retryCount.current) * 1000;
+          setTimeout(fetchAccountInfo, backoff);
+        } else {
+          setError('Failed to fetch account info');
+          setLoading(false);
         }
+        wsRef.current = null;
       };
     };
 
-    // Initial fetch
     fetchAccountInfo();
-
-    // Refresh every 30 seconds
     const interval = setInterval(fetchAccountInfo, 30000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
+      }
+    };
   }, []);
 
   return { accountInfo, totalBalance, loading, error };

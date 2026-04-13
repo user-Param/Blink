@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface OrderData {
   id: string;
@@ -41,7 +41,7 @@ export interface PositionsSummary {
   total_unrealized_pnl_pct: number;
 }
 
-export const useOrderTracking = () => {
+export const useOrderTracking = (marketPrice?: { symbol?: string; price?: number }) => {
   const [orders, setOrders] = useState<OrderData[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
   const [summary, setSummary] = useState<PositionsSummary>({
@@ -52,17 +52,23 @@ export const useOrderTracking = () => {
     total_unrealized_pnl: 0,
     total_unrealized_pnl_pct: 0,
   });
-  const [ws, setWs] = useState<WebSocket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
   // Connect to executor WebSocket
   useEffect(() => {
     const connectToExecutor = () => {
       try {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.close();
+        }
+
         const websocket = new WebSocket('ws://localhost:9001');
+        wsRef.current = websocket;
 
         websocket.onopen = () => {
           console.log('[OrderTracking] Connected to Executor');
-          setWs(websocket);
+          setIsConnected(true);
         };
 
         websocket.onmessage = (event) => {
@@ -90,6 +96,23 @@ export const useOrderTracking = () => {
                 updatePositionsFromOrders(updated);
                 return updated;
               });
+            } else if (data.type === 'executionReport') {
+              // Add handler for real execution reports
+              setOrders((prev) => {
+                const updated = prev.map(order => {
+                  if (order.exchange_order_id === data.orderId || order.order_id === data.clientOrderId) {
+                    return {
+                      ...order,
+                      filled_quantity: parseFloat(data.cumulativeFilledQuantity),
+                      status: data.orderStatus === 'FILLED' ? 'ACCEPTED' : order.status,
+                      fill_price: parseFloat(data.lastFilledPrice)
+                    };
+                  }
+                  return order;
+                });
+                updatePositionsFromOrders(updated);
+                return updated;
+              });
             }
           } catch (e) {
             console.log('[OrderTracking] Message received:', event.data);
@@ -102,6 +125,8 @@ export const useOrderTracking = () => {
 
         websocket.onclose = () => {
           console.log('[OrderTracking] Disconnected from Executor');
+          setIsConnected(false);
+          wsRef.current = null;
           setTimeout(connectToExecutor, 3000);
         };
       } catch (error) {
@@ -112,11 +137,34 @@ export const useOrderTracking = () => {
     connectToExecutor();
 
     return () => {
-      if (ws) {
-        ws.close();
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.close();
       }
     };
   }, []);
+
+  // Update positions when market price changes
+  useEffect(() => {
+    if (!marketPrice?.price || positions.length === 0) return;
+
+    setPositions((prevPositions) => {
+      return prevPositions.map((pos) => {
+        if (pos.symbol === marketPrice.symbol) {
+          const updatedPos = { ...pos, current_mark_price: marketPrice.price! };
+          // Recalculate P&L
+          if (pos.filled_quantity > 0) {
+            const pnl_per_unit = pos.side === 'Long'
+              ? updatedPos.current_mark_price - pos.avg_entry_price
+              : pos.avg_entry_price - updatedPos.current_mark_price;
+            updatedPos.unrealized_pnl = pnl_per_unit * pos.filled_quantity;
+            updatedPos.unrealized_pnl_pct = (pnl_per_unit / pos.avg_entry_price) * 100;
+          }
+          return updatedPos;
+        }
+        return pos;
+      });
+    });
+  }, [marketPrice]);
 
   // Update positions from orders
   const updatePositionsFromOrders = useCallback((orderList: OrderData[]) => {
@@ -140,7 +188,7 @@ export const useOrderTracking = () => {
           unfilled_quantity: 0,
           avg_entry_price: 0,
           total_cost: 0,
-          current_mark_price: 0,
+          current_mark_price: marketPrice?.symbol === key ? marketPrice.price! : 0,
           unrealized_pnl: 0,
           unrealized_pnl_pct: 0,
           orders: [],
@@ -153,7 +201,11 @@ export const useOrderTracking = () => {
       pos.total_quantity += order.quantity;
 
       // Calculate filled vs unfilled
-      if (order.status === 'ACCEPTED') {
+      if (order.filled_quantity && order.filled_quantity > 0) {
+        pos.filled_quantity += order.filled_quantity;
+        pos.total_cost += order.filled_quantity * (order.fill_price || order.price);
+      } else if (order.status === 'ACCEPTED') {
+        // Fallback if filled_quantity not explicitly set but status is ACCEPTED
         pos.filled_quantity += order.quantity;
         pos.total_cost += order.quantity * order.price;
       } else {
@@ -169,10 +221,12 @@ export const useOrderTracking = () => {
       if (pos.total_quantity > 0) {
         pos.avg_entry_price = pos.total_cost / pos.filled_quantity || pos.orders[0]?.price || 0;
 
-        // Generate mock current price (in real system, use market data)
-        const lastOrder = pos.orders[0];
-        const priceChange = Math.random() * 200 - 100; // Random price change
-        pos.current_mark_price = pos.avg_entry_price + priceChange;
+        // Use real market price if available, else keep existing
+        if (marketPrice?.symbol === pos.symbol) {
+          pos.current_mark_price = marketPrice.price!;
+        } else if (pos.current_mark_price === 0) {
+          pos.current_mark_price = pos.avg_entry_price;
+        }
 
         // Calculate P&L
         if (pos.filled_quantity > 0) {
@@ -199,25 +253,23 @@ export const useOrderTracking = () => {
     setPositions(updatedPositions);
 
     // Update summary
-    setSummary((prev) => ({
-      ...prev,
-      positions: updatedPositions,
-      total_margin: updatedPositions.reduce((sum, p) => sum + p.total_cost, 0),
-      available_margin: prev.total_equity - updatedPositions.reduce((sum, p) => sum + p.total_cost, 0),
-      total_unrealized_pnl: totalPnL,
-      total_unrealized_pnl_pct:
-        updatedPositions.length > 0
-          ? (totalPnL /
-              updatedPositions.reduce((sum, p) => sum + p.total_cost, 0)) *
-            100
-          : 0,
-    }));
-  }, []);
+    setSummary((prev) => {
+        const totalMargin = updatedPositions.reduce((sum, p) => sum + p.total_cost, 0);
+        return {
+            ...prev,
+            positions: updatedPositions,
+            total_margin: totalMargin,
+            available_margin: prev.total_equity - totalMargin,
+            total_unrealized_pnl: totalPnL,
+            total_unrealized_pnl_pct: totalMargin > 0 ? (totalPnL / totalMargin) * 100 : 0,
+        };
+    });
+  }, [marketPrice]);
 
   return {
     orders,
     positions,
     summary,
-    isConnected: ws ? ws.readyState === WebSocket.OPEN : false,
+    isConnected,
   };
 };

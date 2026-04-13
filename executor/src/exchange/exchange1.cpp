@@ -33,6 +33,7 @@ public:
     void sendOrder(const OrderRequest& order) override;
     std::string getId() const override { return "binance"; }
     json getAccountInfo() override;
+    json getTradeHistory(const std::string& symbol = "") override;
 
 private:
     std::string api_key_;
@@ -206,6 +207,22 @@ json BinanceExchange::getAccountInfo() {
     std::string signature = generateSignature(query);
     query += "&signature=" + signature;
     return httpRequest(http::verb::get, "/account", query, true);
+}
+
+json BinanceExchange::getTradeHistory(const std::string& symbol) {
+    if (!connected_) return {};
+    auto now = std::chrono::system_clock::now();
+    auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
+    
+    std::string query_symbol = symbol.empty() ? "BTCUSDT" : symbol;
+    std::ostringstream query;
+    query << "symbol=" << query_symbol
+          << "&timestamp=" << timestamp;
+    
+    std::string signature = generateSignature(query.str());
+    query << "&signature=" << signature;
+    
+    return httpRequest(http::verb::get, "/myTrades", query.str(), true);
 }
 
 // ----------------------------------------------------------------------

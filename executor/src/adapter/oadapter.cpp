@@ -271,6 +271,24 @@ void OAdapter::handleSession(tcp::socket socket) {
                                 ws_ptr->write(net::buffer(error.dump()));
                             }
                             
+                        } else if (j["type"] == "get_trade_history") {
+                            // Get trade history from exchange
+                            if (exchange_) {
+                                std::string symbol = j.value("symbol", "");
+                                auto trade_history = exchange_->getTradeHistory(symbol);
+                                json response = {
+                                    {"type", "trade_history"},
+                                    {"data", trade_history}
+                                };
+                                ws_ptr->write(net::buffer(response.dump()));
+                            } else {
+                                json error = {
+                                    {"type", "trade_history"},
+                                    {"error", "Exchange not initialized"}
+                                };
+                                ws_ptr->write(net::buffer(error.dump()));
+                            }
+                            
                         } else if (j["type"] == "register_strategy") {
                             std::string strategy_id = j.value("strategy_id", "");
                             this->registerStrategy(strategy_id);
