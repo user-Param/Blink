@@ -166,11 +166,14 @@ void BinanceExchange::sendOrder(const OrderRequest& order) {
     std::ostringstream query;
     query << "symbol=" << order.symbol
           << "&side=" << order.side
-          << "&type=LIMIT"
-          << "&timeInForce=GTC"
+          << "&type=" << order.type
           << "&quantity=" << order.quantity
-          << "&price=" << std::fixed << std::setprecision(2) << order.price
           << "&timestamp=" << timestamp;
+    
+    if (order.type == "LIMIT") {
+        query << "&timeInForce=GTC"
+              << "&price=" << std::fixed << std::setprecision(2) << order.price;
+    }
 
     std::string signature = generateSignature(query.str());
     query << "&signature=" << signature;
@@ -189,7 +192,7 @@ void BinanceExchange::processOrderResponse(const json& response, const OrderRequ
             std::string err = response.value("msg", "Unknown error");
             notifyResponse(original_order.order_id, "REJECTED", err);
         } else if (response.contains("orderId")) {
-            std::string binance_id = std::to_string(response["orderId"].get<long>());
+            std::string binance_id = std::to_string(response["orderId"].get<long long>());
             notifyResponse(original_order.order_id, "ACCEPTED", "Order ID: " + binance_id);
         } else {
             notifyResponse(original_order.order_id, "ERROR", "Unexpected response");

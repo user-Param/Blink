@@ -21,7 +21,7 @@ type Strategy = {
 };
 
 const Simulate = () => {
-    const { isConnected, marketData, sendMessage, subscribe } = useWebSocket();
+    const { isConnected, marketData, sendMessage, subscribe, lastMessage } = useWebSocket();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
     const [selectedStrategyId, setSelectedStrategyId] = useState<string>("");
@@ -71,10 +71,10 @@ const Simulate = () => {
 
     // Handle WebSocket messages for strategies and results
     useEffect(() => {
-        if (!marketData) return;
+        if (!lastMessage) return;
 
         try {
-            const msg = marketData; // MarketData hook might actually return the last raw message or parsed JSON
+            const msg = JSON.parse(lastMessage);
             if (msg.type === "db_response" && Array.isArray(msg.data)) {
                 setStrategies(msg.data);
                 if (msg.data.length > 0 && !selectedStrategyId) {
@@ -85,9 +85,9 @@ const Simulate = () => {
                 setIsBacktestRunning(false);
             }
         } catch (e) {
-            // Error parsing or not our message
+            // Not a JSON message or not for us
         }
-    }, [marketData, selectedStrategyId]);
+    }, [lastMessage, selectedStrategyId]);
 
     const handleAddDataset = (e: React.FormEvent) => {
         e.preventDefault();

@@ -9,17 +9,22 @@ import { Group, Panel } from "react-resizable-panels";
 
 
 export const Trade = () => {
-    const { isConnected, marketData, sendMessage, subscribe } = useWebSocket();
+    // Market data connection
+    const { isConnected: isMarketConnected, marketData, subscribe } = useWebSocket("ws://localhost:9000");
+    // Order/Executor connection
+    const { isConnected: isOrderConnected, sendMessage: sendOrderMessage } = useWebSocket("ws://localhost:9001");
 
     useEffect(() => {
         // Subscribe to consolidated market data
-        subscribe("ticker_");
-    }, [subscribe]);
+        if (isMarketConnected) {
+            subscribe("ticker_");
+        }
+    }, [isMarketConnected, subscribe]);
 
     return (
         <div className="h-full flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
 
-            <TradeNavbar isConnected={isConnected} marketData={marketData} />
+            <TradeNavbar isConnected={isOrderConnected && isMarketConnected} marketData={marketData} />
 
 
             <div className="flex-1 flex overflow-hidden min-h-0 gap-3 p-3">
@@ -37,13 +42,13 @@ export const Trade = () => {
 
                     {/* Positions Panel takes full remaining space */}
                     <div className="flex-1 min-h-0">
-                        <TradePositions />
+                        <TradePositions marketData={marketData} />
                     </div>
                 </div>
 
                 {/* Right: Control Panel Only */}
                 <div className=" shrink-0">
-                    <TradeControlPanel marketData={marketData} sendMessage={sendMessage} />
+                    <TradeControlPanel marketData={marketData} sendMessage={sendOrderMessage} />
                 </div>
 
             </div>

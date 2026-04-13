@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Wallet, Shield, Play, Square, Settings2, Info } from "lucide-react";
+import { useWebSocket } from "../../hooks/useWebSocket";
 
 type TradeControlPanelProps = {
   marketData: any;
@@ -11,20 +12,44 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
   const [activeStrategy, setActiveStrategy] = useState<string | null>(null);
   const [orderType, setOrderType] = useState<"limit" | "market">("limit");
   const [amount, setAmount] = useState("");
+  
+  const { sendMessage: sendDbRequest, lastMessage: dbMessage } = useWebSocket("ws://localhost:9000");
+  const [strategies, setStrategies] = useState<any[]>([]);
 
-  const strategies = [
-    { id: "tf-1", name: "Trend Follower V2", desc: "HFT Optimized • Momentum", pnl: "+12.4%" },
-    { id: "mr-1", name: "Mean Reversion", desc: "Mean Reverting • Low Vol", pnl: "-2.1%" },
-    { id: "gb-1", name: "Grid Bot Alpha", desc: "Sideways Markets", pnl: "+5.8%" },
-  ];
+  // Fetch strategies on mount
+  useEffect(() => {
+    const fetchStrategies = () => {
+      sendDbRequest(JSON.stringify({ request: "get_strategies" }));
+    };
+    
+    // Slight delay to ensure socket is ready
+    const timer = setTimeout(fetchStrategies, 1000);
+    return () => clearTimeout(timer);
+  }, [sendDbRequest]);
+
+  // Handle database responses
+  useEffect(() => {
+    if (dbMessage) {
+      try {
+        const msg = JSON.parse(dbMessage);
+        if (msg.type === "db_response" && Array.isArray(msg.data)) {
+          setStrategies(msg.data);
+        }
+      } catch (e) {
+        console.error("Error parsing DB response:", e);
+      }
+    }
+  }, [dbMessage]);
 
   const handleOrder = (side: "buy" | "sell") => {
     sendMessage(JSON.stringify({
-      action: "place_order",
-      side,
-      type: orderType,
-      amount: parseFloat(amount),
-      price: orderType === "limit" ? marketData?.price : null
+      type: "order",
+      side: side.toUpperCase(),
+      order_type: orderType.toUpperCase(),
+      quantity: parseFloat(amount),
+      price: orderType === "limit" ? marketData?.price : (marketData?.price || 0),
+      symbol: marketData?.symbol || "BTCUSDT",
+      timestamp: Date.now()
     }));
     setAmount("");
   };
@@ -32,10 +57,10 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
   const toggleStrategy = (id: string) => {
     if (activeStrategy === id) {
       setActiveStrategy(null);
-      sendMessage(JSON.stringify({ mode: "_Live", action: "stop", strategyId: id }));
+      sendMessage(JSON.stringify({ type: "unregister_strategy", strategy_id: id }));
     } else {
       setActiveStrategy(id);
-      sendMessage(JSON.stringify({ mode: "_Live", action: "start", strategyId: id }));
+      sendMessage(JSON.stringify({ type: "register_strategy", strategy_id: id }));
     }
   };
 
@@ -144,33 +169,39 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
           </div>
 
           <div className="space-y-3">
-            {strategies.map((strat) => (
-              <div 
-                key={strat.id} 
-                className={`p-4 rounded-2xl border transition-all duration-300 ${activeStrategy === strat.id ? "bg-[#FF6D1F]/10 border-[#FF6D1F]/30 shadow-lg shadow-[#FF6D1F]/5" : "bg-black/30 border-white/5 hover:border-white/10"}`}
-              >
-                <div className="flex justify-between items-start mb-3">
-                  <div>
-                    <h4 className={`font-bold text-sm ${activeStrategy === strat.id ? "text-white" : "text-white/80"}`}>{strat.name}</h4>
-                    <p className="text-[10px] text-white/20 mt-0.5">{strat.desc}</p>
-                  </div>
-                  <div className={`px-2 py-0.5 rounded-full text-[9px] font-black ${strat.pnl.startsWith("+") ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
-                    {strat.pnl}
-                  </div>
-                </div>
-                
-                <button 
-                  onClick={() => toggleStrategy(strat.id)}
-                  className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeStrategy === strat.id ? "bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30" : "bg-[#FF6D1F] text-white shadow-lg shadow-[#FF6D1F]/20 hover:bg-[#e55d1a]"}`}
+            {strategies.length > 0 ? (
+              strategies.map((strat) => (
+                <div 
+                  key={strat.id} 
+                  className={`p-4 rounded-2xl border transition-all duration-300 ${activeStrategy === strat.id ? "bg-[#FF6D1F]/10 border-[#FF6D1F]/30 shadow-lg shadow-[#FF6D1F]/5" : "bg-black/30 border-white/5 hover:border-white/10"}`}
                 >
-                  {activeStrategy === strat.id ? (
-                    <><Square size={12} fill="currentColor" className="animate-pulse" /> Stop Strategy</>
-                  ) : (
-                    <><Play size={12} fill="currentColor" /> Deploy Algo</>
-                  )}
-                </button>
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className={`font-bold text-sm ${activeStrategy === strat.id ? "text-white" : "text-white/80"}`}>{strat.name}</h4>
+                      <p className="text-[10px] text-white/20 mt-0.5">{strat.language} • Strategy</p>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-500/20 text-blue-400`}>
+                      READY
+                    </div>
+                  </div>
+                  
+                  <button 
+                    onClick={() => toggleStrategy(strat.id)}
+                    className={`w-full py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeStrategy === strat.id ? "bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30" : "bg-[#FF6D1F] text-white shadow-lg shadow-[#FF6D1F]/20 hover:bg-[#e55d1a]"}`}
+                  >
+                    {activeStrategy === strat.id ? (
+                      <><Square size={12} fill="currentColor" className="animate-pulse" /> Stop Strategy</>
+                    ) : (
+                      <><Play size={12} fill="currentColor" /> Deploy Algo</>
+                    )}
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="p-8 text-center text-white/20 text-xs border border-dashed border-white/10 rounded-2xl">
+                No strategies found.
               </div>
-            ))}
+            )}
           </div>
 
           {/* Risk Shield */}

@@ -19,9 +19,9 @@ from pathlib import Path
 app = Flask(__name__)
 CORS(app)
 
-# Strategy storage directory
-STRATEGY_DIR = Path("/Users/param/Documents/BLINK/user/blink/strategies")
-STRATEGY_DIR.mkdir(exist_ok=True)
+# Strategy storage directory - relative to this script
+STRATEGY_DIR = Path(__file__).parent.absolute() / "engine" / "algos"
+STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
 
 @app.route('/validate', methods=['POST'])
 def validate_code():
@@ -56,7 +56,7 @@ def validate_python(code):
             if isinstance(node, ast.ClassDef):
                 has_class = True
                 for subnode in node.body:
-                    if isinstance(subnode, ast.FunctionDef) and subnode.name == 'on_tick':
+                    if isinstance(subnode, ast.FunctionDef) and (subnode.name == 'on_tick' or subnode.name == 'onTick'):
                         has_on_tick = True
                         break
         
@@ -294,7 +294,7 @@ def health():
     return jsonify({'status': 'ok', 'service': 'research_executor'})
 
 if __name__ == '__main__':
-    port = int(os.getenv('RESEARCH_BACKEND_PORT', '5000'))
+    port = int(os.getenv('RESEARCH_BACKEND_PORT', '5001'))
     print("🚀 Research Executor Backend starting on http://localhost:" + str(port))
     print(f"📁 Strategies stored in: {STRATEGY_DIR}")
     app.run(debug=False, host='0.0.0.0', port=port)

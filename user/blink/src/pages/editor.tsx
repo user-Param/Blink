@@ -7,7 +7,7 @@ import type { FileType } from "../types/editor";
 import { Shield, AlertCircle, X, CheckCircle2, Play } from "lucide-react";
 
 const BACKEND_URL =
-  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5000";
+  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
 
 const Editor = () => {
   const { isConnected, marketData, subscribe, sendMessage } = useWebSocket();
@@ -15,11 +15,91 @@ const Editor = () => {
   const [files, setFiles] = useState<FileType[]>([
     {
       id: "1",
-      name: "strategy1.py",
-      content:
-        "# Python Strategy Example\nimport time\n\ndef main():\n    print('Strategy initialized!')\n    print('Current time:', time.strftime('%Y-%m-%d %H:%M:%S'))\n\nif __name__ == '__main__':\n    main()",
+      name: "sma_crossover.py",
+      content: `# Simple Moving Average Crossover Strategy
+import time
+
+class SMACrossover:
+    def __init__(self, short_period=5, long_period=20):
+        self.short_period = short_period
+        self.long_period = long_period
+        self.prices = []
+        print(f"SMA Crossover Initialized (Short: {short_period}, Long: {long_period})")
+
+    def on_tick(self, price):
+        self.prices.append(price)
+        if len(self.prices) > self.long_period:
+            self.prices.pop(0)
+            
+        if len(self.prices) < self.long_period:
+            return "WAITING"
+            
+        short_sma = sum(self.prices[-self.short_period:]) / self.short_period
+        long_sma = sum(self.prices[-self.long_period:]) / self.long_period
+        
+        if short_sma > long_sma:
+            return "BUY"
+        elif short_sma < long_sma:
+            return "SELL"
+        return "HOLD"`,
       language: "python",
-      path: "engine/algos/strategy1.py",
+      path: "engine/algos/sma_crossover.py",
+    },
+    {
+      id: "2",
+      name: "rsi_strategy.py",
+      content: `# RSI Mean Reversion Strategy
+import time
+
+class RSIStrategy:
+    def __init__(self, period=14, overbought=70, oversold=30):
+        self.period = period
+        self.overbought = overbought
+        self.oversold = oversold
+        self.prices = []
+        print(f"RSI Strategy Initialized (Period: {period}, OB: {overbought}, OS: {oversold})")
+
+    def calculate_rsi(self, prices):
+        if len(prices) <= self.period:
+            return 50
+        
+        gains = []
+        losses = []
+        for i in range(1, len(prices)):
+            diff = prices[i] - prices[i-1]
+            if diff >= 0:
+                gains.append(diff)
+                losses.append(0)
+            else:
+                gains.append(0)
+                losses.append(abs(diff))
+        
+        avg_gain = sum(gains[-self.period:]) / self.period
+        avg_loss = sum(losses[-self.period:]) / self.period
+        
+        if avg_loss == 0:
+            return 100
+        
+        rs = avg_gain / avg_loss
+        return 100 - (100 / (1 + rs))
+
+    def on_tick(self, price):
+        self.prices.append(price)
+        if len(self.prices) > self.period + 1:
+            self.prices.pop(0)
+            
+        if len(self.prices) < self.period + 1:
+            return "WAITING"
+            
+        rsi = self.calculate_rsi(self.prices)
+        
+        if rsi < self.oversold:
+            return "BUY"
+        elif rsi > self.overbought:
+            return "SELL"
+        return "HOLD"`,
+      language: "python",
+      path: "engine/algos/rsi_strategy.py",
     },
   ]);
 
@@ -73,54 +153,72 @@ const Editor = () => {
         setOutput(`❌ Validation failed:\n${data.error}\n`);
       }
     } catch (err) {
-      setOutput("❌ Validation backend error. Please ensure Research Executor is running.\n");
+      setOutput("❌ Validation backend error. Please ensure Research Executor is running on port 5001.\n");
     }
   };
 
-  const confirmSave = () => {
-    setOutput("💾 Persisting strategy to database...\n");
-    
-    const payload = {
-      request: "save_strategy",
-      data: {
-        name: activeFile.name.split('.')[0],
-        language: activeFile.language,
-        content: activeFile.content,
-        path: activeFile.path
+  const confirmSave = async () => {
+    setOutput("💾 Persisting strategy to simulation engine...\n");
+    try {
+      const res = await fetch(`${BACKEND_URL}/save-strategy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: activeFile.name.split('.')[0],
+          content: activeFile.content,
+          language: activeFile.language
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setShowDeployWarning(false);
+        setOutput(`✨ Strategy successfully saved and deployed to simulation engine!\nLocation: ${data.path}\n`);
+
+        // Also save to database via Datafeed (port 9000) using the hook's sendMessage
+        sendMessage(JSON.stringify({
+          request: "save_strategy",
+          data: {
+            name: activeFile.name.replace(/\.[^/.]+$/, ""),
+            language: activeFile.language,
+            content: activeFile.content,
+            path: data.path
+          }
+        }));
+      } else {
+        setOutput(`❌ Save failed: ${data.error}\n`);
       }
-    };
-
-    sendMessage(JSON.stringify(payload));
-    setShowDeployWarning(false);
-    setOutput("✨ Strategy successfully saved and deployed to simulation engine!\n");
+    } catch (err) {
+      setOutput("❌ Save backend error. Please ensure Research Executor is running on port 5001.\n");
+    }
   };
 
-const runCode = async () => {
-  setOutput("⏳ Running...\n");
+  const runCode = async () => {
+    setOutput("⏳ Running...\n");
 
-  try {
-    const res = await fetch(`${BACKEND_URL}/run`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        code: activeFile.content,
-        language: activeFile.language
-      }),
-    });
+    try {
+      const res = await fetch(`${BACKEND_URL}/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: activeFile.content,
+          language: activeFile.language
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (data.success) {
-      setOutput(`✅ Execution completed\n\n${data.output}`);
-    } else {
-      setOutput(`❌ Error\n\n${data.error}`);
+      if (data.success) {
+        setOutput(`✅ Execution completed\n\n${data.output}`);
+      } else {
+        setOutput(`❌ Error during execution:\n\n${data.error || data.output}`);
+      }
+    } catch (err) {
+      setOutput("❌ Research Executor backend not running or connection failed. Make sure port 5001 is open.");
     }
-  } catch (err) {
-    setOutput("❌ Backend not running or connection failed");
-  }
-};
+  };
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       if (isDraggingSidebar.current) {

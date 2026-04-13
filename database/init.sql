@@ -44,3 +44,7 @@ CREATE TABLE IF NOT EXISTS trade_history (
     status VARCHAR(20), 
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Grant privileges to blink user
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO blink;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO blink;

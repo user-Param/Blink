@@ -28,6 +28,7 @@ done
 echo "Cleaning up old processes..."
 lsof -ti:9000 | xargs kill -9 2>/dev/null || true
 lsof -ti:9001 | xargs kill -9 2>/dev/null || true
+lsof -ti:5001 | xargs kill -9 2>/dev/null || true
 sleep 1
 
 echo "Building and starting BLINK Ecosystem"
@@ -58,8 +59,6 @@ sleep 2
 # 4. Engine
 echo "Starting blink engine...."
 cd "$PROJECT_ROOT/engine"
-source .venv/bin/activate
-python3 research_executor.py > "$LOG_DIR/research.log" 2>&1 &
 if [ ! -d "build" ]; then mkdir build; fi
 cd build && cmake .. && make -j4
 ./engine > "$LOG_DIR/engine.log" 2>&1 &
@@ -68,9 +67,16 @@ ENGINE_PID=$!
 # 5. Research Executor Backend (Python)
 echo "Starting BLINK Research Executor Backend..."
 cd "$PROJECT_ROOT"
-pip3 install Flask flask-cors 2>&1 | grep -E "Successfully|already|Requirement"
+# Ensure dependencies are installed in the current python environment
+python3 -m pip install --quiet Flask flask-cors 2>/dev/null
+# Try to apply database permissions if psql is available
+psql -h localhost -U blink -d blink -f "$PROJECT_ROOT/database/init.sql" >/dev/null 2>&1 || \
+psql -h localhost -d blink -f "$PROJECT_ROOT/database/init.sql" >/dev/null 2>&1 || \
+echo "⚠️  Note: Database permissions might need manual update if psql is not in PATH."
+
 python3 research_executor.py > "$LOG_DIR/research.log" 2>&1 &
 RESEARCH_PID=$!
+
 
 # 6. Frontend
 echo "Starting React frontend..."

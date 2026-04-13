@@ -78,6 +78,7 @@ private:
     
     std::vector<std::string> active_strategies_;
     std::map<std::string, OrderResult> pending_orders_;
+    std::mutex pending_orders_mutex_;
     
     // Store UI client WebSocket pointers for broadcasting
     std::vector<std::shared_ptr<websocket::stream<tcp::socket>>> ui_clients_;

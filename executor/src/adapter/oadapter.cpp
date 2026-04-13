@@ -33,25 +33,32 @@ void OAdapter::setExchange(const std::string& exchange_id) {
         auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch()).count();
         
-        //std::cout << "[OAdapter] Order Response: " << order_id << " | Status: " << status << " | " << message << std::endl;
-        
         // Look up the original order to get all details
-        if (pending_orders_.count(order_id)) {
-            auto& pending = pending_orders_[order_id];
-            OrderResult result{
-                pending.order_id,
-                pending.strategy_id,
-                pending.symbol,
-                pending.side,
-                pending.quantity,
-                pending.price,
-                status,
-                order_id,
-                message,
-                (uint64_t)timestamp
-            };
+        OrderResult result;
+        bool found = false;
+        {
+            std::lock_guard<std::mutex> lock(pending_orders_mutex_);
+            if (pending_orders_.count(order_id)) {
+                auto& pending = pending_orders_[order_id];
+                result = {
+                    pending.order_id,
+                    pending.strategy_id,
+                    pending.symbol,
+                    pending.side,
+                    pending.quantity,
+                    pending.price,
+                    status,
+                    order_id,
+                    message,
+                    (uint64_t)timestamp
+                };
+                found = true;
+                pending_orders_.erase(order_id);
+            }
+        }
+
+        if (found) {
             broadcastOrderResult(result);
-            pending_orders_.erase(order_id);
         }
     });
 }
@@ -73,10 +80,6 @@ void OAdapter::unregisterStrategy(const std::string& strategy_id) {
 }
 
 void OAdapter::onOrderSignal(const OrderRequest& order) {
-    // std::cout << "\n[OAdapter] Order from Strategy[" << order.strategy_id << "]: "
-    //           << order.symbol << " " << order.side << " " << order.quantity
-    //           << " @ $" << order.price << std::endl;
-
     // Store pending order
     OrderResult pending{
         order.order_id,
@@ -90,7 +93,14 @@ void OAdapter::onOrderSignal(const OrderRequest& order) {
         "Waiting for exchange response",
         order.timestamp
     };
-    pending_orders_[order.order_id] = pending;
+    
+    {
+        std::lock_guard<std::mutex> lock(pending_orders_mutex_);
+        pending_orders_[order.order_id] = pending;
+    }
+    
+    // Broadcast initial pending state to all UIs
+    broadcastOrderResult(pending);
     
     sendOrder(order);
 }
@@ -165,18 +175,17 @@ void OAdapter::broadcastOrderResult(const OrderResult& result) {
     };
     
     std::string response = result_msg.dump();
-    //std::cout << "[OAdapter] Broadcasting result to " << ui_clients_.size() << " clients" << std::endl;
     
     // Broadcast to all connected UI clients
     {
         std::lock_guard<std::mutex> lock(ui_clients_mutex_);
         for (auto& client : ui_clients_) {
             try {
-                if (client) {
+                if (client && client->is_open()) {
                     client->write(net::buffer(response));
                 }
             } catch (const std::exception& e) {
-                std::cerr << "[OAdapter] Broadcast error: " << e.what() << std::endl;
+                //std::cerr << "[OAdapter] Broadcast error: " << e.what() << std::endl;
             }
         }
     }
@@ -214,8 +223,6 @@ void OAdapter::handleSession(tcp::socket socket) {
     try {
         ws_ptr->accept();
         
-        //std::cout << "[OAdapter] ✓ Client connected" << std::endl;
-        
         // Register this client for broadcasts
         {
             std::lock_guard<std::mutex> lock(ui_clients_mutex_);
@@ -235,7 +242,10 @@ void OAdapter::handleSession(tcp::socket socket) {
                     if (j.contains("type")) {
                         if (j["type"] == "order") {
                             OrderRequest order;
-                            order.order_id = j.value("order_id", std::to_string(std::time(nullptr)));
+                            // Use timestamp + counter for more unique order_id
+                            static std::atomic<uint64_t> order_counter{0};
+                            auto now = std::chrono::system_clock::now().time_since_epoch().count();
+                            order.order_id = j.value("order_id", std::to_string(now) + "_" + std::to_string(order_counter++));
                             order.symbol = j["symbol"];
                             order.price = j["price"];
                             order.quantity = j["quantity"];
@@ -246,16 +256,7 @@ void OAdapter::handleSession(tcp::socket socket) {
 
                             this->onOrderSignal(order);
                             
-                            // Send acknowledgement
-                            json ack = {
-                                {"status", "RECEIVED"},
-                                {"order_id", order.order_id},
-                                {"message", "Order received by executor"}
-                            };
-                            ws_ptr->write(net::buffer(ack.dump()));
-                            
                         } else if (j["type"] == "get_account_info") {
-                            // Get account info from exchange
                             if (exchange_) {
                                 auto account_info = exchange_->getAccountInfo();
                                 json response = {
@@ -263,16 +264,9 @@ void OAdapter::handleSession(tcp::socket socket) {
                                     {"data", account_info}
                                 };
                                 ws_ptr->write(net::buffer(response.dump()));
-                            } else {
-                                json error = {
-                                    {"type", "account_info"},
-                                    {"error", "Exchange not initialized"}
-                                };
-                                ws_ptr->write(net::buffer(error.dump()));
                             }
                             
                         } else if (j["type"] == "get_trade_history") {
-                            // Get trade history from exchange
                             if (exchange_) {
                                 std::string symbol = j.value("symbol", "");
                                 auto trade_history = exchange_->getTradeHistory(symbol);
@@ -281,12 +275,6 @@ void OAdapter::handleSession(tcp::socket socket) {
                                     {"data", trade_history}
                                 };
                                 ws_ptr->write(net::buffer(response.dump()));
-                            } else {
-                                json error = {
-                                    {"type", "trade_history"},
-                                    {"error", "Exchange not initialized"}
-                                };
-                                ws_ptr->write(net::buffer(error.dump()));
                             }
                             
                         } else if (j["type"] == "register_strategy") {
@@ -309,7 +297,7 @@ void OAdapter::handleSession(tcp::socket socket) {
                 }
             } catch (const beast::system_error& se) {
                 if (se.code() == websocket::error::closed) {
-                    break; // Client disconnected
+                    break;
                 }
                 throw;
             }
@@ -330,6 +318,4 @@ void OAdapter::handleSession(tcp::socket socket) {
             ui_clients_.end()
         );
     }
-    
-    //std::cout << "[OAdapter] Client disconnected" << std::endl;
 }

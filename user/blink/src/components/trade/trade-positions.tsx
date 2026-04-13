@@ -16,9 +16,9 @@ interface LiveOrder {
   timestamp: number;
 }
 
-const TradePositions = () => {
+const TradePositions = ({ marketData }: { marketData?: any }) => {
   const [activeTab, setActiveTab] = useState("Positions");
-  const { positions, summary, orders, isConnected } = useOrderTracking();
+  const { positions, summary, orders, isConnected } = useOrderTracking(marketData);
   const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const updateBatchRef = useRef<LiveOrder[]>([]);
