@@ -21,7 +21,7 @@ type Strategy = {
 };
 
 const Simulate = () => {
-    const { isConnected, marketData, sendMessage, subscribe, lastMessage } = useWebSocket();
+    const { isConnected, marketData, sendMessage, subscribe } = useWebSocket();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null);
     const [selectedStrategyId, setSelectedStrategyId] = useState<string>("");
@@ -71,10 +71,10 @@ const Simulate = () => {
 
     // Handle WebSocket messages for strategies and results
     useEffect(() => {
-        if (!lastMessage) return;
+        if (!marketData) return;
 
         try {
-            const msg = JSON.parse(lastMessage);
+            const msg = marketData; // MarketData hook might actually return the last raw message or parsed JSON
             if (msg.type === "db_response" && Array.isArray(msg.data)) {
                 setStrategies(msg.data);
                 if (msg.data.length > 0 && !selectedStrategyId) {
@@ -85,9 +85,9 @@ const Simulate = () => {
                 setIsBacktestRunning(false);
             }
         } catch (e) {
-            // Not a JSON message or not for us
+            // Error parsing or not our message
         }
-    }, [lastMessage, selectedStrategyId]);
+    }, [marketData, selectedStrategyId]);
 
     const handleAddDataset = (e: React.FormEvent) => {
         e.preventDefault();
@@ -229,23 +229,6 @@ const Simulate = () => {
                             <h1 className="text-2xl font-bold text-white mb-2">Available Datasets</h1>
                             <p className="text-white/40 text-sm">Select a dataset to begin simulation</p>
                         </div>
-
-                        {marketData && (
-                            <div className="flex gap-6 bg-white/5 border border-white/10 p-4 rounded-xl">
-                                <div className="text-center">
-                                    <p className="text-white/30 text-[10px] uppercase font-bold mb-1">Price</p>
-                                    <p className="text-white font-mono font-bold">{marketData.price?.toFixed(2) || "---"}</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-green-500/30 text-[10px] uppercase font-bold mb-1">Bid</p>
-                                    <p className="text-green-400 font-mono font-bold">{marketData.bid?.toFixed(2) || "---"}</p>
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-red-500/30 text-[10px] uppercase font-bold mb-1">Ask</p>
-                                    <p className="text-red-400 font-mono font-bold">{marketData.ask?.toFixed(2) || "---"}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

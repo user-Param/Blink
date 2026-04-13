@@ -131,6 +131,19 @@ def run_code():
             return run_python(code)
         elif language == 'cpp':
             return run_cpp(code)
+        elif language == 'ipynb':
+            # Extract Python code from notebook cells
+            try:
+                notebook = json.loads(code)
+                python_code = ""
+                for cell in notebook:
+                    if cell.get('type') == 'code':
+                        python_code += cell.get('content', '') + "\n"
+                if not python_code.strip():
+                    return jsonify({'error': 'No code cells found in notebook.'}), 400
+                return run_python(python_code)
+            except json.JSONDecodeError:
+                return jsonify({'error': 'Invalid notebook format'}), 400
         else:
             return jsonify({'error': f'Unsupported language: {language}'}), 400
             
