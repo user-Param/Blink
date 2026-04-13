@@ -76,78 +76,22 @@ int main() {
             { id: "c2", type: "code", content: "# Data Analysis\nimport pandas as pd\nimport numpy as np\n\n# Load market data\nprint('Research environment initialized')\nprint('Ready for data analysis')", output: "" }
         ]);
     } else {
-        content = `# Python Strategy Implementation
-# ==============================
+        content = `import matplotlib.pyplot as plt
+import numpy as np
 
-import time
-from typing import Optional
+# Generate 50 fake prices (simple upward trend with noise)
+prices = 100 + np.cumsum(np.random.randn(50) * 2)
 
-class StrategyConfig:
-    """Strategy configuration"""
-    SYMBOL = "BTCUSDT"
-    BUY_THRESHOLD = 1.01   # 1% above last price
-    SELL_THRESHOLD = 0.99  # 1% below last price
-    POSITION_SIZE = 1.0
-    
-class MarketData:
-    """Market data structure"""
-    def __init__(self, price, bid, ask, symbol, timestamp=None):
-        self.price = price
-        self.bid = bid
-        self.ask = ask
-        self.symbol = symbol
-        self.timestamp = timestamp or int(time.time() * 1000)
+# Create the plot
+plt.figure(figsize=(10, 5))
+plt.plot(prices, marker='o', linestyle='-', color='lime', linewidth=2, markersize=4)
+plt.title('Simple Price Trend', fontsize=14)
+plt.xlabel('Time (minutes)')
+plt.ylabel('Price (USDT)')
+plt.grid(True, alpha=0.3)
 
-class SimpleStrategy:
-    """Simple trading strategy"""
-    
-    def __init__(self):
-        self.last_price = None
-        self.position = 0
-        
-    def on_tick(self, market_data: MarketData) -> Optional[str]:
-        """
-        Called on each market tick
-        Returns: "BUY", "SELL", or None
-        """
-        if self.last_price is None:
-            self.last_price = market_data.price
-            return None
-        
-        # Simple momentum strategy
-        price_change = market_data.price / self.last_price
-        
-        if price_change > StrategyConfig.BUY_THRESHOLD:
-            print(f"📈 BUY signal at {market_data.price}")
-            self.position = StrategyConfig.POSITION_SIZE
-            self.last_price = market_data.price
-            return "BUY"
-        
-        elif price_change < StrategyConfig.SELL_THRESHOLD and self.position > 0:
-            print(f"📉 SELL signal at {market_data.price}")
-            self.position = 0
-            self.last_price = market_data.price
-            return "SELL"
-        
-        self.last_price = market_data.price
-        return None
-
-def main():
-    """Test the strategy"""
-    strategy = SimpleStrategy()
-    
-    # Simulate market data
-    test_prices = [50000, 50500, 51000, 50800, 50300]
-    
-    for price in test_prices:
-        md = MarketData(price=price, bid=price-1, ask=price+1, symbol="BTCUSDT")
-        signal = strategy.on_tick(md)
-        print(f"Price: {price}, Signal: {signal}, Position: {strategy.position}")
-    
-    print("\\n✅ Strategy executed successfully!")
-
-if __name__ == "__main__":
-    main()`;
+# Show the chart (opens a new window)
+plt.show()`;
     }
 
     const newFile: FileType = { id, name, content, language, path };

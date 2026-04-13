@@ -40,129 +40,176 @@ const Docs = () => {
   const renderContent = () => {
     switch (activeSection) {
       case "introduction":
-    return (
-        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        return (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <h1 className="text-6xl text-white">Introduction</h1>
             <div className="space-y-5">
-                <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
-                    BLINK is an powerful algorithmic trading engine built for easy strategy research, 
-                    backtesting, and live trading. We integrate with common data providers and brokerages 
-                    so you can quickly deploy algorithmic trading strategies.
-                </p>
-                <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
-                    The core of BLINK is written in C++20 for maximum performance, paired with a React based web client that provides an interactive environment for trading, writing algorithms and visualizing research thesis. You can prototype ideas rapidly in Python, then optimize them in C++ using integrated compilers all within the same workspace. Strategies are saved internally, ready to be backtested against custom market scenarios in a simulated environment or deployed directly to live markets in the blink of an eye.
-                </p>
+              <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                BLINK is an powerful algorithmic trading engine built for easy
+                strategy research, backtesting, and live trading. We integrate
+                with common data providers and brokerages so you can quickly
+                deploy algorithmic trading strategies.
+              </p>
+              <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                The core of BLINK is written in C++20 for maximum performance,
+                paired with a React based web client that provides an
+                interactive environment for trading, writing algorithms and
+                visualizing research thesis. You can prototype ideas rapidly in
+                Python, then optimize them in C++ using integrated compilers all
+                within the same workspace. Strategies are saved internally,
+                ready to be backtested against custom market scenarios in a
+                simulated environment or deployed directly to live markets in
+                the blink of an eye.
+              </p>
             </div>
 
             {/* System Overview */}
             <div className="space-y-6">
-                <div className="flex items-center gap-3">
-                    <span className="w-1 h-7 bg-[#FF6D1F] rounded-full"></span>
-                    <h2 className="text-3xl font-bold text-white tracking-tight">System Overview</h2>
-                </div>
-                {/* System Overview */}
-<div className="space-y-6">    
-    <p className="text-white/60 text-base leading-relaxed max-w-3xl">
-        BLINK is built as a collection of independent, single purpose services that communicate 
-        over fast WebSocket connections. This modular design keeps the system resilient and easy 
-        to extend you can modify or replace one component without disrupting the others.
-    </p>
-    
-    <p className="text-white/60 text-base leading-relaxed max-w-3xl">
-        At the center sits the <span className="text-white font-medium">Datafeed Server</span>, 
-        which ingests real time market data from exchanges, databrokers and historical ticks from the database. 
-        It broadcasts everything over a publish subscribe system, so clients receive only the topics 
-        they care about.
-    </p>
-    
-    <p className="text-white/60 text-base leading-relaxed max-w-3xl">
-        The <span className="text-white font-medium">Trading Engine</span> subscribes to these topics 
-        and runs your strategies. Every incoming tick is passed to the active algorithms, which can 
-        generate buy or sell signals. Those signals are validated by the 
-        <span className="text-white font-medium"> Risk Manager</span> and then forwarded to the 
-        <span className="text-white font-medium"> Order Executor</span>. The Executor 
-        handles all communication with exchanges placing orders, tracking fills, and reporting 
-        results back to the client.
-    </p>
-    
-    <p className="text-white/60 text-base leading-relaxed max-w-3xl">
-        For backtesting, the <span className="text-white font-medium">Dadapter</span> service reads 
-        historical price data from PostgreSQL and streams it to the Datafeed Server exactly as if 
-        it were live. Your strategies process this data identically to real time ticks, giving you 
-        a faithful simulation of how they would have performed in the past.
-    </p>
-    
-</div>
-
-
-                <div className="bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/10 rounded-3xl p-6">
-        <div className="relative w-full flex justify-center">
-            <img 
-                src="src/assets/systemoverview.png" 
-                alt="BLINK System Architecture Diagram"
-                className="w-full max-w-4xl h-auto rounded-xl border border-white/5 shadow-2xl"
-            />
-        </div>
-        <p className="text-white/30 text-xs text-center mt-4 italic">
-            High‑level overview of BLINK's modular, service‑oriented systems architecture.
-        </p>
-    </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-                {/* The most important plugins */}
+              <div className="flex items-center gap-3">
+                <span className="w-1 h-7 bg-[#FF6D1F] rounded-full"></span>
+                <h2 className="text-3xl font-bold text-white tracking-tight">
+                  System Overview
+                </h2>
+              </div>
+              {/* System Overview */}
+              <div className="space-y-6">
                 <p className="text-white/60 text-base leading-relaxed max-w-3xl">
-                    The most important plugins are:
+                  BLINK is built as a collection of independent, single purpose
+                  services that communicate over fast WebSocket connections.
+                  This modular design keeps the system resilient and easy to
+                  extend you can modify or replace one component without
+                  disrupting the others.
                 </p>
 
-                {/* Modular Diagram / Plugin Cards */}
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                    {[
-                        { title: "Result Processing", desc: "Handle all messages from the algorithmic trading engine. Decide what should be sent, and where.", icon: "📤" },
-                        { title: "Datafeed Sourcing", desc: "Connect and download the data required. For backtesting, files from disk; for live, a real‑time stream.", icon: "📡" },
-                        { title: "Transaction Processing", desc: "Process new order requests; either using fill models or an actual brokerage.", icon: "🔐" },
-                        { title: "Realtime Event Management", desc: "Generate real‑time events like end‑of‑day. Trigger callbacks to event handlers.", icon: "⏱️" },
-                        { title: "Algorithm State Setup", desc: "Configure the algorithm cash, portfolio and data requested. Initialize all state parameters.", icon: "⚙️" },
-                    ].map((plugin, idx) => (
-                        <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-[#FF6D1F]/40 transition-all">
-                            <div className="text-2xl mb-2">{plugin.icon}</div>
-                            <h4 className="text-white font-bold text-sm mb-1">{plugin.title}</h4>
-                            <p className="text-white/40 text-[11px] leading-relaxed">{plugin.desc}</p>
-                        </div>
-                    ))}
+                <p className="text-white/60 text-base leading-relaxed max-w-3xl">
+                  At the center sits the{" "}
+                  <span className="text-white font-medium">
+                    Datafeed Server
+                  </span>
+                  , which ingests real time market data from exchanges,
+                  databrokers and historical ticks from the database. It
+                  broadcasts everything over a publish subscribe system, so
+                  clients receive only the topics they care about.
+                </p>
+
+                <p className="text-white/60 text-base leading-relaxed max-w-3xl">
+                  The{" "}
+                  <span className="text-white font-medium">Trading Engine</span>{" "}
+                  subscribes to these topics and runs your strategies. Every
+                  incoming tick is passed to the active algorithms, which can
+                  generate buy or sell signals. Those signals are validated by
+                  the
+                  <span className="text-white font-medium">
+                    {" "}
+                    Risk Manager
+                  </span>{" "}
+                  and then forwarded to the
+                  <span className="text-white font-medium">
+                    {" "}
+                    Order Executor
+                  </span>
+                  . The Executor handles all communication with exchanges
+                  placing orders, tracking fills, and reporting results back to
+                  the client.
+                </p>
+
+                <p className="text-white/60 text-base leading-relaxed max-w-3xl">
+                  For backtesting, the{" "}
+                  <span className="text-white font-medium">Dadapter</span>{" "}
+                  service reads historical price data from PostgreSQL and
+                  streams it to the Datafeed Server exactly as if it were live.
+                  Your strategies process this data identically to real time
+                  ticks, giving you a faithful simulation of how they would have
+                  performed in the past.
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/10 rounded-3xl p-6">
+                <div className="relative w-full flex justify-center">
+                  <img
+                    src="src/assets/systemoverview.png"
+                    alt="BLINK System Architecture Diagram"
+                    className="w-full max-w-4xl h-auto rounded-xl border border-white/5 shadow-2xl"
+                  />
                 </div>
-
-                <p className="text-white/50 text-sm italic max-w-3xl">
-                    These are all configurable from the <code className="text-[#FF6D1F] bg-[#FF6D1F]/10 px-1.5 py-0.5 rounded">.env</code> file.
+                <p className="text-white/30 text-xs text-center mt-4 italic">
+                  High‑level overview of BLINK's modular, service‑oriented
+                  systems architecture.
                 </p>
+              </div>
+
+              {/* The most important plugins */}
+              <p className="text-white/60 text-base leading-relaxed max-w-3xl">
+                The most important plugins are:
+              </p>
+
+              {/* Modular Diagram / Plugin Cards */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                {[
+                  {
+                    title: "Result Processing",
+                    desc: "Handle all messages from the algorithmic trading engine. Decide what should be sent, and where."
+                  },
+                  {
+                    title: "Datafeed Sourcing",
+                    desc: "Connect and download the data required. For backtesting, files from disk; for live, a real‑time stream."
+                  },
+                  {
+                    title: "Transaction Processing",
+                    desc: "Process new order requests; either using fill models or an actual brokerage."
+                  },
+                  {
+                    title: "Realtime Event Management",
+                    desc: "Generate real‑time events like end‑of‑day. Trigger callbacks to event handlers."
+                  },
+                  {
+                    title: "Algorithm State Setup",
+                    desc: "Configure the algorithm cash, portfolio and data requested. Initialize all state parameters."
+                  },
+                ].map((plugin, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white/5 border border-white/10 rounded-xl p-4 hover:border-[#FF6D1F]/40 transition-all"
+                  >
+                    
+                    <h4 className="text-white font-bold text-sm mb-1">
+                      {plugin.title}
+                    </h4>
+                    <p className="text-white/40 text-[11px] leading-relaxed">
+                      {plugin.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-white/50 text-sm italic max-w-3xl">
+                These are all configurable from the{" "}
+                <code className="text-[#FF6D1F] bg-[#FF6D1F]/10 px-1.5 py-0.5 rounded">
+                  .env
+                </code>{" "}
+                file.
+              </p>
             </div>
 
             {/* Getting Started Button */}
             <div className="pt-4">
-                <button
-                    onClick={() => setActiveSection("getting-started")}
-                    className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold text-lg transition-all shadow-lg shadow-[#FF6D1F]/30 hover:shadow-xl hover:shadow-[#FF6D1F]/40 overflow-hidden"
-                >
-                    <span className="relative z-10">Start Building Strategies</span>
-                    <span className="relative z-10 group-hover:translate-x-1 transition-transform">→</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
-                </button>
-                <p className="text-white/30 text-xs mt-3">
-                    Jump into the Getting Started guide and write your first strategy in under 5 minutes.
-                </p>
+              <button
+                onClick={() => setActiveSection("getting-started")}
+                className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold text-lg transition-all shadow-lg shadow-[#FF6D1F]/30 hover:shadow-xl hover:shadow-[#FF6D1F]/40 overflow-hidden"
+              >
+                <span className="relative z-10">Start Building Strategies</span>
+                <span className="relative z-10 group-hover:translate-x-1 transition-transform">
+                  →
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+              </button>
+              <p className="text-white/30 text-xs mt-3">
+                Jump into the Getting Started guide and write your first
+                strategy in under 5 minutes.
+              </p>
             </div>
-        </div>
-    );
+          </div>
+        );
       case "getting-started":
         return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
