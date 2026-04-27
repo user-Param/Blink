@@ -31,69 +31,56 @@ const Home = ({ setActivePage }: HomeProps) => {
 
 
 
-  const features = [
-    {
-      icon: <Zap className="text-yellow-400" size={24} />,
-      title: "Ultra-Low Latency",
-      description:
-        "Execute trades in microseconds with our high-performance C++ core engine.",
-    },
-    {
-      icon: <Shield className="text-blue-400" size={24} />,
-      title: "Institutional Security",
-      description:
-        "Military-grade encryption and multi-sig cold storage for all digital assets.",
-    },
-    {
-      icon: <BarChart3 className="text-[#FF6D1F]" size={24} />,
-      title: "Advanced Analytics",
-      description:
-        "Powerful backtesting suite with millisecond-precision historical data.",
-    },
-  ];
+  
 
   return (
     <div className="min-h-screen text-white overflow-x-hidden relative">
-      <div className="absolute inset-0 z-0">
+      <div className="absolute top-0 left-0 right-0 h-screen z-0 pointer-events-none">
         <BGPattern variant="grid" size={40} fill="rgba(255,255,255,0.03)" mask="fade-edges" />
       </div>
       
-      <div className="relative z-10 pt-20 pb-16 px-6 lg:pt-32 lg:pb-32">
-        <div className="max-w-7xl mx-auto text-center">
+      <div className="relative z-10 pt-20 pb-16 px-6 lg:pt-32 lg:pb-32 min-h-screen flex items-center">
+        <div className="max-w-7xl mx-auto text-left w-full">
           
-          
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-white/60 mb-8 animate-fade-in">
+            <span className="w-2 h-2 rounded-full bg-[#FF6D1F] animate-pulse"></span>
+            Blink V1.0 is now live
+          </div>
 
-          <h1 className="mb-8 font-black tracking-tight leading-[1.05] flex-col">
-            <span className="block text-5xl lg:text-6xl">
+          <h1 className="mb-8 font-black tracking-tighter leading-[0.9] flex flex-col uppercase">
+            <span className="text-4xl lg:text-6xl mb-4 normal-case font-medium text-white/70">
               Shaping the next generation of algorithmic traders
-
-              
             </span>
-            <span className="text-3xl text-transparent bg-clip-text bg-gradient-to-r from-[#9AD872] to-green-400">
-                Build, backtest, and deploy strategies in one unified platform
+            <div className="flex flex-col lg:flex-row lg:gap-8 items-start">
+              <span className="text-6xl lg:text-[100px] opacity-30">Build.</span>
+              <span className="text-6xl lg:text-[100px] opacity-60">Backtest.</span>
+              <span className="text-6xl lg:text-[100px] text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-[#ff8c4a]">
+                Deploy.
               </span>
-</h1>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
+            </div>
+          </h1>
+
+          <div className="flex flex-col sm:flex-row items-start justify-start gap-6 mt-12">
             <button
               onClick={() => setActivePage("research")}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold transition-all shadow-lg shadow-[#FF6D1F]/20 flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-10 py-5 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-black transition-all shadow-lg shadow-[#FF6D1F]/20 flex items-center justify-center gap-3 group text-xl"
             >
               Start Researching{" "}
               <ArrowRight
-                size={18}
+                size={24}
                 className="group-hover:translate-x-1 transition-transform"
               />
             </button>
             <button
               onClick={() => setActivePage("docs")}
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-10 py-5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-black border border-white/10 transition-all flex items-center justify-center gap-3 text-xl"
             >
               View Documentation
             </button>
           </div>
-
-                      </div>
+        </div>
       </div>
+      <div className="h-screen"></div>
     </div>  );
 };
 
