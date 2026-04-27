@@ -11,6 +11,7 @@ const Blink = () => {
     const [activePage, setActivePage] = useState("home");
     return(
         <div className="min-h-screen bg-[#181818]">
+            <div className="text-white/50 p-2 sticky top-0 bg-[#181818] z-50">
             <div className="text-white/50 p-4  sticky top-0 bg-transparent z-50">
                 <Navbar setActivePage={setActivePage} activePage={activePage}/>
             </div>

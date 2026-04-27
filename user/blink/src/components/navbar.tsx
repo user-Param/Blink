@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { Zap } from "lucide-react";
 
 type NavbarProps = {
   setActivePage: (page: string) => void;
@@ -25,73 +26,55 @@ const Navbar = ({ setActivePage, activePage }: NavbarProps) => {
     }
   };
 
+  const navLinks = [
+    { name: "Home", id: "home", action: () => setActivePage("home") },
+    { name: "Docs", id: "docs", action: () => setActivePage("docs") },
+    { name: "Trade", id: "trade", action: () => { setActivePage("trade"); sendMode("_Live"); } },
+    { name: "Research", id: "research", action: () => setActivePage("research") },
+    { name: "Simulate", id: "simulate", action: () => { setActivePage("simulate"); sendMode("_Backtest"); } },
+    { name: "Param", id: "profile", action: () => setActivePage("profile") },
+  ];
+
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between p-4">
+      {/* Logo Section */}
+      <div 
+        className="flex items-center gap-2 cursor-pointer group" 
+        onClick={() => setActivePage("home")}
+      >
+        <div className="relative">
+          <Zap className="text-[#FF6D1F] fill-[#FF6D1F] animate-pulse" size={20} />
+        </div>
+        <h2 className="text-white text-xl font-black tracking-tighter group-hover:text-[#FF6D1F] transition-colors">
+          BLINK
+        </h2>
+      </div>
 
-      <h2 className="text-white text-lg font-semibold">Blink</h2>
-
-      <div className="flex items-center">
-        <span className="pr-5 pl-5">
+      <div className="flex items-center gap-2">
+        <div className="relative mr-4">
           <input
-            className="border border-white/30 rounded-sm px-2 py-1 bg-transparent text-white"
+            className="border border-white/10 rounded-full px-4 py-1.5 bg-white/5 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F]/50 transition-all w-48"
             type="text"
-            placeholder="search..."
+            placeholder="Search assets..."
           />
-        </span>
+        </div>
 
-        <span
-          onClick={() => setActivePage("home")}
-          className={`pr-5 pl-5 cursor-pointer ${
-            activePage === "home" ? "text-white" : "text-white/50"
-          }`}
-        >
-          Home
-        </span>
-
-        <span
-          onClick={() => setActivePage("docs")}
-          className={`pr-5 pl-5 cursor-pointer ${
-            activePage === "docs" ? "text-white" : "text-white/50"
-          }`}
-        >
-          Docs
-        </span>
-
-        <span
-          onClick={() => {setActivePage("trade"); sendMode("_Live")}}
-          className={`pr-5 pl-5 cursor-pointer ${
-            activePage === "trade" ? "text-white" : "text-white/50"
-          }`}
-        >
-          Trade
-        </span>
-
-        <span
-          onClick={() => {setActivePage("research")}}
-          className={`pr-5 pl-5 cursor-pointer ${
-            activePage === "editor" ? "text-white" : "text-white/50"
-          }`}
-        >
-          Research
-        </span>
-
-        <span
-          onClick={() => {setActivePage("simulate"); sendMode("_Backtest")}}
-          className={`pr-5 pl-5 cursor-pointer ${
-            activePage === "simulate" ? "text-white" : "text-white/50"
-          }`}
-        >
-          Simulate
-        </span>
-
-        <span
-          onClick={() => setActivePage("profile")}
-          className={`pr-5 pl-5 cursor-pointer ${
-            activePage === "profile" ? "text-white" : "text-white/50"
-          }`}
-        >
-          Param
-        </span>
+        <div className="flex items-center">
+          {navLinks.map((link) => (
+            <span
+              key={link.id}
+              onClick={link.action}
+              className={`px-4 py-1 text-sm font-bold cursor-pointer transition-all relative group ${
+                activePage === link.id ? "text-white" : "text-white/40 hover:text-white"
+              }`}
+            >
+              {link.name}
+              {activePage === link.id && (
+                <div className="absolute -bottom-[17px] left-0 right-0 h-[2px] bg-[#FFFFFF] opacity-20"></div>
+              )}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
