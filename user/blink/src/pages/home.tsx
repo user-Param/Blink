@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { BGPattern } from "../components/animation/background";
+import { Component as TextVaporize } from "../components/animation/text";
+import AnimatedTextCycle from "../components/animation/text2";
 
 
 
@@ -66,39 +68,64 @@ const Home = ({ setActivePage }: HomeProps) => {
             Blink V1.0 is now live
           </div>
 
-          <h1 className="mb-8 font-black tracking-tighter leading-[0.9] flex flex-col uppercase">
-            <span className="text-4xl lg:text-6xl mb-4 normal-case font-medium text-white/70">
-              Shaping the next generation of algorithmic traders
+          <h1 className="mb-8 font-black tracking-tighter leading-[1.1] flex flex-col uppercase">
+            <span className="text-2xl lg:text-4xl normal-case font-medium text-white/70">
+              Shaping the next generation of 
             </span>
-            <div className="flex flex-col lg:flex-row lg:gap-8 items-start">
-              <span className="text-6xl lg:text-[100px] opacity-30">Build.</span>
-              <span className="text-6xl lg:text-[100px] opacity-60">Backtest.</span>
-              <span className="text-6xl lg:text-[100px] text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-[#ff8c4a]">
+            <span className="text-2xl lg:text-4xl normal-case font-medium text-white/70">
+              algorithmic traders
+            </span>
+            <div className="flex flex-col lg:flex-row lg:gap-4 items-start">
+              <span className="text-3xl lg:text-5xl opacity-10">Build.</span>
+              <span className="text-3xl lg:text-5xl opacity-30">Backtest.</span>
+              <span className="text-3xl lg:text-5xl text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-[#ff8c4a]">
                 Deploy.
               </span>
             </div>
           </h1>
 
-          <div className="flex flex-col sm:flex-row items-start justify-start gap-6 mt-12">
+          <div className="flex flex-col sm:flex-row items-start justify-start gap-4 mt-8">
             <button
               onClick={() => setActivePage("research")}
-              className="w-full sm:w-auto px-10 py-5 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-black transition-all shadow-lg shadow-[#FF6D1F]/20 flex items-center justify-center gap-3 group text-xl"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold transition-all shadow-lg shadow-[#FF6D1F]/20 flex items-center justify-center gap-2 group text-sm"
             >
               Start Researching{" "}
               <ArrowRight
-                size={24}
+                size={16}
                 className="group-hover:translate-x-1 transition-transform"
               />
             </button>
             <button
               onClick={() => setActivePage("docs")}
-              className="w-full sm:w-auto px-10 py-5 rounded-xl bg-white/5 hover:bg-white/10 text-white font-black border border-white/10 transition-all flex items-center justify-center gap-3 text-xl"
+              className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white font-bold border border-white/10 transition-all flex items-center justify-center gap-2 text-sm"
             >
               View Documentation
             </button>
           </div>
         </div>
       </div>
+
+      {/* Animated Text Section */}
+      <div className="relative z-10 w-full py-20">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="h-[20vh] w-full flex justify-evenly items-center mb-12">
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
+          </div>
+          
+          <div className="h-[20vh] w-full flex flex-col justify-center items-center border-t border-white/20">
+            <p className="text-white/30 text-sm uppercase tracking-widest mb-4">Empowering Traders to</p>
+            <AnimatedTextCycle
+              words={["Analyze.", "Automate.", "Accelerate.", "Succeed."]}
+              interval={3000}
+              className="text-4xl lg:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-[#ff8c4a]"
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="h-screen"></div>
     </div>  );
 };
