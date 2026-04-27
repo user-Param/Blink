@@ -12,7 +12,7 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <pqxx/pqxx> // PostgreSQL C++ client library
+#include <pqxx/pqxx> 
 
 namespace net = boost::asio;
 namespace beast = boost::beast;

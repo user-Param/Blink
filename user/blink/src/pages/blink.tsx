@@ -10,12 +10,11 @@ import { Profile } from "./profile";
 const Blink = () => {
     const [activePage, setActivePage] = useState("home");
     return(
-        <>
-        <div className="bg-[#181818] h-screen">
-            <div className="text-white/50 p-2 border-b border-white/20">
+        <div className="min-h-screen bg-[#181818]">
+            <div className="text-white/50 p-2 border-b border-white/20 sticky top-0 bg-[#181818] z-50">
                 <Navbar setActivePage={setActivePage} activePage={activePage}/>
             </div>
-            <div className="h-screen">
+            <div>
                 {activePage === "home" && <Home setActivePage={setActivePage} />}
                 {activePage === "docs" && <Docs/>}
                 {activePage === "trade" && <Trade />}
@@ -24,7 +23,6 @@ const Blink = () => {
                 {activePage === "profile" && <Profile />}
             </div>
         </div>
-        </>
     )
 }
 export default Blink;
