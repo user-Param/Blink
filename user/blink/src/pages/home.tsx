@@ -90,17 +90,17 @@ const Home = ({ setActivePage }: HomeProps) => {
       <div className="relative z-10 w-full py-20">
         <div className="max-w-7xl mx-auto px-6">
           <div className="h-[20vh] w-full flex justify-evenly items-center mb-12">
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="15B+"/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="99%"/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="24/7"/></div>
+            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="0.1ms"/></div>
           </div>
           
           <div className="h-[20vh] w-full flex flex-col justify-center items-center border-t border-white/20">
             <p className="text-white/30 text-sm uppercase tracking-widest mb-4">Empowering Traders to</p>
             <AnimatedTextCycle
               words={["Analyze.", "Automate.", "Accelerate.", "Succeed."]}
-              interval={3000}
+              interval={1000}
               className="text-4xl lg:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-[#ff8c4a]"
             />
           </div>
