@@ -45,21 +45,25 @@ const Docs = () => {
             <h1 className="text-6xl text-white">Introduction</h1>
             <div className="space-y-5">
               <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
-                BLINK is an powerful algorithmic trading engine built for easy
-                strategy research, backtesting, and live trading. We integrate
-                with common data providers and brokerages so you can quickly
-                deploy algorithmic trading strategies.
+                BLINK is a high performance algorithmic trading Platform built for the next generation of algorithmic traders.
               </p>
               <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
-                The core of BLINK is written in C++20 for maximum performance,
-                paired with a React based web client that provides an
-                interactive environment for trading, writing algorithms and
-                visualizing research thesis. You can prototype ideas rapidly in
-                Python, then optimize them in C++ using integrated compilers all
-                within the same workspace. Strategies are saved internally,
-                ready to be backtested against custom market scenarios in a
-                simulated environment or deployed directly to live markets in
-                the blink of an eye.
+                Trading financial markets is not just difficult it’s unforgiving. Even a single mistake can erase the gains of dozens of correct decisions. 
+                And even when you’re right, profits are never guaranteed. You are not just trading the markets you are competing against institutions, funds,
+                worlds smartest brains and systems backed by billions in capital, designed to extract inefficiencies down to the smallest fraction. In this environment, intuition 
+                is not enough And belief alone does not create an edge.
+              </p>
+              <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+              This is where most participants fail. They approach markets with fragmented tools, delayed data, and decision making processes that are reactive rather than predictive.
+              They rely on manual execution, limited backtesting, and assumptions that cannot survive real market conditions. Even when they experience short term success, it is rarely
+              repeatable because it is not built on a system.
+              </p>
+              <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                BLINK exists to give you that edge. Not just by simplifying and automating trading, but by equipping you with the tools used by top quant firms to operate in a truly 
+                competitive and unforgiving environment. 
+              </p>
+              <p>
+
               </p>
             </div>
 
