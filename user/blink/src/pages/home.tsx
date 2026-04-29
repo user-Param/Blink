@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { BGPattern } from "../components/animation/background";
 import { Component as TextVaporize } from "../components/animation/text";
 import AnimatedTextCycle from "../components/animation/text2";
@@ -16,6 +16,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useWebSocket } from "../hooks/useWebSocket";
+import TradingList from "../components/section2";
 
 interface HomeProps {
   setActivePage: (page: string) => void;
@@ -108,14 +109,20 @@ const Home = ({ setActivePage }: HomeProps) => {
       {/* Animated Text Section */}
       <div className="relative z-10 w-full py-20">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="h-[20vh] w-full flex justify-evenly items-center mb-12">
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="15B+"/></div>
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="99%"/></div>
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="24/7"/></div>
-            <div className="h-full w-[20%] rounded-xl"><TextVaporize text="0.1ms"/></div>
+          <div className="w-full flex justify-between mb-12">
+            <VaporizeBlock text="AI" label="Strategy Generation" />
+            <VaporizeBlock text="10K+" label="Parallel Executions" />
+            <VaporizeBlock text="24/7" label="Global Market Coverage" />
+            <VaporizeBlock text="5ms" label="Execution Latency" />
           </div>
           
-          <div className="h-[20vh] w-full flex flex-col justify-center items-center border-t border-white/20">
+          
+        </div>
+        <div className="max-w-7xl mx-auto px-6 mt-20">
+          <TradingList />
+        </div>
+      </div>
+      <div className="h-[20vh] w-full flex flex-col justify-center items-center border-t border-white/20">
             <p className="text-white/30 text-sm uppercase tracking-widest mb-4">Empowering Traders to</p>
             <AnimatedTextCycle
               words={["Analyze.", "Automate.", "Accelerate.", "Succeed."]}
@@ -123,11 +130,27 @@ const Home = ({ setActivePage }: HomeProps) => {
               className="text-4xl lg:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-[#FF6D1F] to-[#ff8c4a]"
             />
           </div>
-        </div>
-      </div>
+      <div className=""></div>
+    </div>
+  );
+};
 
-      <div className="h-screen"></div>
-    </div>  );
+const VaporizeBlock = ({ text, label }: { text: string; label: string }) => {
+  const [isHovered, setIsHovered] = React.useState(false);
+  return (
+    <div 
+      className="h-full w-[20%] rounded-xl text-center flex flex-col items-center justify-center group cursor-default"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="h-24 w-full">
+        <TextVaporize text={text} manualHover={isHovered} hoverColor="rgb(249, 115, 22)" />
+      </div>
+      <span className={`text-[10px] uppercase tracking-[0.2em] font-semibold transition-all duration-300 ${isHovered ? 'text-orange-500' : 'text-white/40'}`}>
+        {label}
+      </span>
+    </div>
+  );
 };
 
 export default Home;

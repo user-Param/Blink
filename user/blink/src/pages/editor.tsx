@@ -15,6 +15,16 @@ const Editor = () => {
   const [files, setFiles] = useState<FileType[]>([
     {
       id: "1",
+      name: "research_notebook.ipynb",
+      content: JSON.stringify([
+        { id: "c1", type: "markdown", content: "# Research Notebook\n\nDocument your hypothesis and analysis here." },
+        { id: "c2", type: "code", content: "# Data Analysis\nimport pandas as pd\nimport numpy as np\n\n# Load market data\nprint('Research environment initialized')\nprint('Ready for data analysis')", output: "" }
+      ]),
+      language: "ipynb",
+      path: "research/research_notebook.ipynb",
+    },
+    {
+      id: "2",
       name: "sma_crossover.py",
       content: `# Simple Moving Average Crossover Strategy
 import time
@@ -46,7 +56,7 @@ class SMACrossover:
       path: "engine/algos/sma_crossover.py",
     },
     {
-      id: "2",
+      id: "3",
       name: "rsi_strategy.py",
       content: `# RSI Mean Reversion Strategy
 import time
@@ -134,7 +144,7 @@ class RSIStrategy:
   };
 
   const handleSave = async () => {
-    setOutput("🔍 Validating strategy components...\n");
+    setOutput("Validating strategy components...\n");
     try {
       const res = await fetch(`${BACKEND_URL}/validate`, {
         method: "POST",
@@ -147,18 +157,18 @@ class RSIStrategy:
       
       const data = await res.json();
       if (data.valid) {
-        setOutput("✅ Validation successful. Strategy structure is correct.\n");
+        setOutput("Validation successful. Strategy structure is correct.\n");
         setShowDeployWarning(true);
       } else {
-        setOutput(`❌ Validation failed:\n${data.error}\n`);
+        setOutput(`Validation failed:\n${data.error}\n`);
       }
     } catch (err) {
-      setOutput("❌ Validation backend error. Please ensure Research Executor is running on port 5001.\n");
+      setOutput("Validation backend error. Please ensure Research Executor is running on port 5001.\n");
     }
   };
 
   const confirmSave = async () => {
-    setOutput("💾 Persisting strategy to simulation engine...\n");
+    setOutput("Persisting strategy to simulation engine...\n");
     try {
       const res = await fetch(`${BACKEND_URL}/save-strategy`, {
         method: "POST",
@@ -173,7 +183,7 @@ class RSIStrategy:
       const data = await res.json();
       if (data.success) {
         setShowDeployWarning(false);
-        setOutput(`✨ Strategy successfully saved and deployed to simulation engine!\nLocation: ${data.path}\n`);
+        setOutput(`Strategy successfully saved and deployed to simulation engine!\nLocation: ${data.path}\n`);
 
         // Also save to database via Datafeed (port 9000) using the hook's sendMessage
         sendMessage(JSON.stringify({
@@ -186,15 +196,15 @@ class RSIStrategy:
           }
         }));
       } else {
-        setOutput(`❌ Save failed: ${data.error}\n`);
+        setOutput(`Save failed: ${data.error}\n`);
       }
     } catch (err) {
-      setOutput("❌ Save backend error. Please ensure Research Executor is running on port 5001.\n");
+      setOutput("Save backend error. Please ensure Research Executor is running on port 5001.\n");
     }
   };
 
   const runCode = async () => {
-    setOutput("⏳ Running...\n");
+    setOutput("Running...\n");
 
     try {
       const res = await fetch(`${BACKEND_URL}/run`, {
@@ -211,12 +221,12 @@ class RSIStrategy:
       const data = await res.json();
 
       if (data.success) {
-        setOutput(`✅ Execution completed\n\n${data.output}`);
+        setOutput(`Execution completed\n\n${data.output}`);
       } else {
-        setOutput(`❌ Error during execution:\n\n${data.error || data.output}`);
+        setOutput(`Error during execution:\n\n${data.error || data.output}`);
       }
     } catch (err) {
-      setOutput("❌ Research Executor backend not running or connection failed. Make sure port 5001 is open.");
+      setOutput("Research Executor backend not running or connection failed. Make sure port 5001 is open.");
     }
   };
   useEffect(() => {

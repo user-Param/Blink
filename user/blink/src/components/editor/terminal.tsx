@@ -14,9 +14,9 @@ export default function TerminalUI({ output }: { output: string }) {
       cursorBlink: true,
       fontSize: 12,
       theme: {
-        background: "#000000",
-        foreground: "#00ff00",
-        cursor: "#00ff00"
+        background: "#181818",
+        foreground: "#ffffff",
+        cursor: "#ffffff"
       },
       scrollback: 1000,
       disableStdin: true
@@ -25,7 +25,7 @@ export default function TerminalUI({ output }: { output: string }) {
     term.current.open(terminalRef.current);
 
 
-    term.current.writeln("\x1b[1;32m║  BLINK Research Executor Terminal                       ║\x1b[0m");
+    term.current.writeln("║  BLINK Research Executor Terminal  ║\x1b[0m");
 
 
     return () => term.current?.dispose();
@@ -37,7 +37,6 @@ export default function TerminalUI({ output }: { output: string }) {
 
       
       term.current.writeln("");
-      term.current.writeln("\x1b[1;34m────────────────────────────────────────\x1b[0m");
 
       const lines = output.split('\n');
 
@@ -48,19 +47,19 @@ export default function TerminalUI({ output }: { output: string }) {
         }
 
         if (line.includes('') || line.includes('successfully')) {
-          term.current?.writeln(`\x1b[1;32m${line}\x1b[0m`);
+          term.current?.writeln(`${line}`);
         } else if (line.includes('') || line.includes('Error') || line.includes('error')) {
-          term.current?.writeln(`\x1b[1;31m${line}\x1b[0m`);
+          term.current?.writeln(`${line}`);
         } else if (line.includes('')) {
-          term.current?.writeln(`\x1b[1;33m${line}\x1b[0m`);
+          term.current?.writeln(`${line}`);
         } else if (line.includes('')) {
-          term.current?.writeln(`\x1b[1;36m${line}\x1b[0m`);
+          term.current?.writeln(`${line}`);
         } else {
           term.current?.writeln(line);
         }
       });
 
-      // ✅ Auto scroll (important)
+      
       term.current.scrollToBottom();
     }
   }, [output]);
