@@ -109,7 +109,7 @@ plt.show()`;
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#0d0d0d]">
+    <div className="flex flex-col h-full bg-[#202020]">
       <div className="p-3 border-b border-white/5 space-y-2">
         <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest px-1">New Strategy</p>
         <div className="grid grid-cols-3 gap-1">
