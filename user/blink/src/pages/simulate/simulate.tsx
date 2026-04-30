@@ -20,6 +20,9 @@ type Strategy = {
     content: string;
 };
 
+const BACKEND_URL =
+    (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
+
 const Simulate = () => {
     const { isConnected, marketData, sendMessage, subscribe } = useWebSocket();
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -41,6 +44,33 @@ const Simulate = () => {
             date: "Jan 2024 - Mar 2024",
             source: "bitcoin_final.csv",
             fileName: "bitcoin_final.csv"
+        },
+        {
+            id: "2",
+            title: "Flash Crash",
+            description: "A sudden, dramatic drop in the price of a security, index, or currency, followed by a sharp and rapid recovery within minutes or hours",
+            stocks: "S&P 500",
+            date: "May 2010",
+            source: "bitcoin_final.csv",
+            fileName: "bitcoin_final.csv"
+        },
+        {
+            id: "3",
+            title: "short squeeze",
+            description: "A short squeeze typically unfolds after a stock’s been declining in price for some time",
+            stocks: "NASDAQ",
+            date: "Jan 2024 - Mar 2024",
+            source: "bitcoin_final.csv",
+            fileName: "bitcoin_final.csv"
+        },
+        {
+            id: "4",
+            title: "Liquidity Vacuums",
+            description: "A liquidity vacuum is a market condition where available buy or sell orders suddenly disappear, creating a void that causes prices to jump or fall rapidly due to insufficient depth",
+            stocks: "Dow Jones",
+            date: "Jan 2024 - Mar 2024",
+            source: "bitcoin_final.csv",
+            fileName: "bitcoin_final.csv"
         }
     ]);
 
@@ -59,35 +89,45 @@ const Simulate = () => {
         subscribe("backtest_bid_");
         subscribe("backtest_ask_");
 
-        // Request strategies from database
-        const fetchStrategies = () => {
-            if (isConnected) {
-                sendMessage(JSON.stringify({ request: "get_strategies" }));
+        // Fetch strategies from research executor instead of database
+        const fetchStrategies = async () => {
+            try {
+                const res = await fetch(`${BACKEND_URL}/list-strategies`);
+                const data = await res.json();
+                if (data.strategies) {
+                    const mapped = data.strategies.map((s: any) => ({
+                        id: s.name,
+                        name: s.name,
+                        language: s.language,
+                        content: ""
+                    }));
+                    setStrategies(mapped);
+                    if (mapped.length > 0 && !selectedStrategyId) {
+                        setSelectedStrategyId(mapped[0].id);
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to fetch strategies", err);
             }
         };
 
         fetchStrategies();
-    }, [subscribe, isConnected, sendMessage]);
+    }, [subscribe, isConnected]);
 
-    // Handle WebSocket messages for strategies and results
+    // Handle WebSocket messages for backtest results
     useEffect(() => {
         if (!marketData) return;
 
         try {
-            const msg = marketData; // MarketData hook might actually return the last raw message or parsed JSON
-            if (msg.type === "db_response" && Array.isArray(msg.data)) {
-                setStrategies(msg.data);
-                if (msg.data.length > 0 && !selectedStrategyId) {
-                    setSelectedStrategyId(msg.data[0].id);
-                }
-            } else if (msg.type === "backtest_result") {
+            const msg = marketData;
+            if (msg.type === "backtest_result") {
                 setBacktestResults(msg.results);
                 setIsBacktestRunning(false);
             }
         } catch (e) {
             // Error parsing or not our message
         }
-    }, [marketData, selectedStrategyId]);
+    }, [marketData]);
 
     const handleAddDataset = (e: React.FormEvent) => {
         e.preventDefault();
@@ -152,7 +192,7 @@ const Simulate = () => {
     };
 
     return (
-        <div className="h-full flex flex-col bg-[#0a0a0a]">
+        <div className="h-full flex flex-col">
             {/* Control Bar */}
             <div className="border-b border-white/10 p-4 flex items-center justify-between bg-[#111]">
                 <div className="flex items-center gap-6">
