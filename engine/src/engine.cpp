@@ -17,6 +17,20 @@ Engine::~Engine()
 void Engine::start()
 {
     std::cout << "Engine started" << std::endl;
+    
+    // Automatically include backtest topics so we can receive historical data
+    std::vector<std::string> initialTopics = topics_;
+    bool hasPrice = false;
+    for(const auto& t : initialTopics) if(t == "backtest_price_") hasPrice = true;
+    
+    if(!hasPrice) {
+        initialTopics.push_back("backtest_price_");
+        initialTopics.push_back("backtest_bid_");
+        initialTopics.push_back("backtest_ask_");
+        initialTopics.push_back("backtest_complete");
+    }
+    setTopics(initialTopics);
+
     connectDatafeed();
 
     running_ = true;
@@ -114,8 +128,15 @@ void Engine::onData(const std::string &raw)
         // Handle specific responses
         if (j.contains("type") && j["type"] == "backtest_result") return;
 
+        // Handle explicit completion message
+        if (j.contains("topic") && j["topic"] == "backtest_complete") {
+            finalizeBacktest();
+            return;
+        }
+
         // Check for backtest completion or data
         if (j.contains("topic") && j["topic"].get<std::string>().find("backtest_") != std::string::npos) {
+            static int tick_count = 0;
             if (!is_backtesting_) {
                 // Initialize backtest
                 is_backtesting_ = true;
@@ -125,6 +146,7 @@ void Engine::onData(const std::string &raw)
                 bt_returns_.clear();
                 bt_max_equity_ = bt_capital_;
                 bt_max_drawdown_ = 0.0;
+                tick_count = 0; // Reset tick count for new backtest
                 std::cout << "[Engine] Backtest started with capital: " << bt_capital_ << std::endl;
             }
 
@@ -146,7 +168,6 @@ void Engine::onData(const std::string &raw)
             
             // For now, simulate end of backtest after 100 ticks or specialized message
             // In a real system, the Dadapter would send an "end_of_stream" message
-            static int tick_count = 0;
             if (++tick_count >= 100) {
                 tick_count = 0;
                 last_price = 0;
@@ -171,6 +192,7 @@ void Engine::onData(const std::string &raw)
 }
 
 void Engine::finalizeBacktest() {
+    if (!is_backtesting_) return; // Don't finalize if not running
     is_backtesting_ = false;
     
     // Compute Metrics

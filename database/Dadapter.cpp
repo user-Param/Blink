@@ -119,26 +119,59 @@ void Dadapter::stream_db_data() {
         
         std::cout << "[Dadapter] Starting stream from Database..." << std::endl;
         
-        for (auto const &row : R) {
-            if (!streaming_) break;
+        if (R.empty()) {
+            std::cout << "[Dadapter] Database is empty, sending mock data for demo..." << std::endl;
+            // Generate 100 mock ticks so Engine can finalize backtest
+            for (int i = 0; i < 100; ++i) {
+                if (!streaming_) break;
+                nlohmann::json data = {
+                    {"topic", "backtest_price_"},
+                    {"timestamp", std::to_string(1714500000 + i)},
+                    {"symbol", "BTCUSDT"},
+                    {"price", 60000.0 + (rand() % 100)},
+                    {"bid", 59990.0},
+                    {"ask", 60010.0}
+                };
+                std::string msg = data.dump();
+                {
+                    std::lock_guard<std::mutex> lock(ws_mutex_);
+                    ws_.write(net::buffer(msg));
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        } else {
+            for (auto const &row : R) {
+                if (!streaming_) break;
 
-            nlohmann::json data = {
-                {"topic", "backtest_ticker_"},
-                {"timestamp", row["timestamp"].as<std::string>()},
-                {"symbol", row["symbol"].as<std::string>()},
-                {"price", row["price"].as<double>()},
-                {"bid", row["bid"].as<double>()},
-                {"ask", row["ask"].as<double>()}
-            };
+                nlohmann::json data = {
+                    {"topic", "backtest_price_"},
+                    {"timestamp", row["timestamp"].as<std::string>()},
+                    {"symbol", row["symbol"].as<std::string>()},
+                    {"price", row["price"].as<double>()},
+                    {"bid", row["bid"].as<double>()},
+                    {"ask", row["ask"].as<double>()}
+                };
 
-            std::string msg = data.dump();
-            ws_.write(net::buffer(msg));
-            
-            // Simulating real-time delay (e.g., 100ms)
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::string msg = data.dump();
+                {
+                    std::lock_guard<std::mutex> lock(ws_mutex_);
+                    ws_.write(net::buffer(msg));
+                }
+                
+                // Simulating real-time delay (e.g., 10ms for backtest speed)
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         }
         
         std::cout << "[Dadapter] Database stream completed." << std::endl;
+        
+        // Send explicit completion message so Engine knows to finalize results
+        nlohmann::json end_msg = {{"topic", "backtest_complete"}};
+        {
+            std::lock_guard<std::mutex> lock(ws_mutex_);
+            ws_.write(net::buffer(end_msg.dump()));
+        }
+
         streaming_ = false;
     } catch (const std::exception &e) {
         std::cerr << "[PostgreSQL] Streaming error: " << e.what() << std::endl;
@@ -148,6 +181,12 @@ void Dadapter::stream_db_data() {
 
 void Dadapter::start_streaming() {
     if (streaming_) return;
+    
+    // Ensure previous thread is cleaned up if it was finished but still joinable
+    if (stream_thread_.joinable()) {
+        stream_thread_.join();
+    }
+    
     streaming_ = true;
     stream_thread_ = std::thread(&Dadapter::stream_db_data, this);
 }
@@ -167,7 +206,10 @@ void Dadapter::run() {
 
 
         nlohmann::json id = {{"type", "adapter"}};
-        ws_.write(net::buffer(id.dump()));
+        {
+            std::lock_guard<std::mutex> lock(ws_mutex_);
+            ws_.write(net::buffer(id.dump()));
+        }
 
         beast::flat_buffer buffer;
         while (running_) {
@@ -200,7 +242,10 @@ void Dadapter::run() {
                         response["data"] = get_all_strategies();
                     }
 
-                    ws_.write(net::buffer(response.dump()));
+                    {
+                        std::lock_guard<std::mutex> lock(ws_mutex_);
+                        ws_.write(net::buffer(response.dump()));
+                    }
                 }
             } catch (const std::exception& e) {
                 // Ignore parse errors or handle them

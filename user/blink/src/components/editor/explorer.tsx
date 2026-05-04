@@ -71,10 +71,67 @@ int main() {
     return 0;
 }`;
     } else if (language === "ipynb") {
-        content = JSON.stringify([
-            { id: "c1", type: "markdown", content: "# Research Notebook\n\nDocument your hypothesis and analysis here." },
-            { id: "c2", type: "code", content: "# Data Analysis\nimport pandas as pd\nimport numpy as np\n\n# Load market data\nprint('Research environment initialized')\nprint('Ready for data analysis')", output: "" }
-        ]);
+              content: JSON.stringify([
+        { id: "c1", type: "markdown", content: "# Research Notebook\n\nDocument your hypothesis and analysis here." },
+        {
+            id: "c2",
+            type: "code",
+            content: `import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+# ============================================
+# 1. 2D Plot (line + scatter)
+# ============================================
+x = np.linspace(0, 2 * np.pi, 100)
+y1 = np.sin(x)
+y2 = np.cos(x)
+plt.figure(figsize=(8, 4))
+plt.plot(x, y1, label='sin(x)', color='crimson', linewidth=2)
+plt.plot(x, y2, label='cos(x)', color='teal', linewidth=2)
+plt.scatter([np.pi/2, np.pi], [1, -1], color='gold', s=80, zorder=5)
+plt.title("2D: Trigonometric Functions")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.show()
+
+# ============================================
+# 2. 3D Plot (surface)
+# ============================================
+X = np.linspace(-5, 5, 50)
+Y = np.linspace(-5, 5, 50)
+X, Y = np.meshgrid(X, Y)
+Z = X * np.exp(-X**2 - Y**2)   # peaks-like function
+
+fig = plt.figure(figsize=(7, 5))
+ax = fig.add_subplot(111, projection='3d')
+surf = ax.plot_surface(X, Y, Z, cmap='plasma', edgecolor='none', alpha=0.9)
+fig.colorbar(surf, shrink=0.5)
+ax.set_title("3D: $z = x e^{-x^2 - y^2}$")
+ax.set_xlabel("X")
+ax.set_ylabel("Y")
+ax.set_zlabel("Z")
+plt.show()
+
+# ============================================
+# 3. Text Output – DataFrame
+# ============================================
+df = pd.DataFrame({
+    'Asset': ['BTC', 'ETH', 'SOL'],
+    'Price': [64200, 3200, 135],
+    '24h Change %': [2.34, -1.12, 5.67]
+})
+print("Portfolio Snapshot:")
+print(df.to_string(index=False))
+
+# ============================================
+# 4. Intentional Error (uncomment to test)
+# ============================================
+# x = 1 / 0`,
+            output: ""
+        }
+      ]);
     } else {
         content = `import matplotlib.pyplot as plt
 import numpy as np

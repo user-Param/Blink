@@ -13,7 +13,16 @@ type NotebookCell = {
     type: "code" | "markdown";
     content: string;
     output?: string;
+    outputs?: CellOutput[];
 };
+
+interface CellOutput {
+  type: "text" | "image/png" | "error";
+  data: string;
+}
+
+const BACKEND_URL =
+  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
 
 const EditorMain = ({ activeFile, updateFileContent }: Props) => {
   // Logic for .ipynb files
@@ -60,15 +69,39 @@ const EditorMain = ({ activeFile, updateFileContent }: Props) => {
     updateFileContent(JSON.stringify(newCells));
   };
 
-  const runCell = (id: string) => {
-    const newCells = cells.map(c => {
-        if (c.id === id && c.type === "code") {
-            return { ...c, output: `[EXECUTION ${new Date().toLocaleTimeString()}]: Cell executed successfully.\nResult: DataFrame head visualized.` };
-        }
-        return c;
-    });
-    setCells(newCells);
-    updateFileContent(JSON.stringify(newCells));
+    const runCell = async (id: string) => {
+    const cell = cells.find(c => c.id === id);
+    if (!cell || cell.type !== "code") return;
+
+    // Show a temporary loading state (optional, but clean)
+    const loadingOutputs: CellOutput[] = [{ type: "text", data: "Running..." }];
+    let updatedCells = cells.map(c =>
+      c.id === id ? { ...c, outputs: loadingOutputs } : c
+    );
+    setCells(updatedCells);
+    updateFileContent(JSON.stringify(updatedCells));
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/run-cell`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: cell.content, language: "python" }),
+      });
+      const json = await res.json();
+      const outputs: CellOutput[] = json.outputs || [];
+      updatedCells = cells.map(c =>
+        c.id === id ? { ...c, outputs } : c
+      );
+    } catch (err) {
+      const errorOutput: CellOutput[] = [
+        { type: "error", data: "Failed to reach backend." }
+      ];
+      updatedCells = cells.map(c =>
+        c.id === id ? { ...c, outputs: errorOutput } : c
+      );
+    }
+    setCells(updatedCells);
+    updateFileContent(JSON.stringify(updatedCells));
   };
 
   if (activeFile.language === "ipynb") {
@@ -129,11 +162,41 @@ const EditorMain = ({ activeFile, updateFileContent }: Props) => {
                                             }}
                                             onChange={(val) => updateCell(cell.id, val || "")}
                                         />
-                                        {cell.output && (
-                                            <div className="p-4 bg-black/40 border-t border-white/5 font-mono text-[11px] text-white/40 whitespace-pre-wrap">
-                                                {cell.output}
-                                            </div>
-                                        )}
+                                        {(cell.outputs && cell.outputs.length > 0) ? (
+    <div className="border-t border-white/10">
+        {cell.outputs.map((out, i) => {
+            if (out.type === "text") {
+                return (
+                    <pre key={i} className="p-4 bg-black/40 font-mono text-[11px] text-white/90 whitespace-pre-wrap leading-relaxed">
+                        {out.data}
+                    </pre>
+                );
+            } else if (out.type === "image/png") {
+                return (
+                    <div key={i} className="p-4 bg-black/40 flex justify-center">
+                        <img
+                            src={`data:image/png;base64,${out.data}`}
+                            alt="Cell output"
+                            className="max-w-full h-auto rounded border border-white/10"
+                        />
+                    </div>
+                );
+            } else if (out.type === "error") {
+                return (
+                    <pre key={i} className="p-4 bg-red-500/10 font-mono text-[11px] text-red-400 whitespace-pre-wrap border-l-2 border-red-500/50">
+                        {out.data}
+                    </pre>
+                );
+            }
+            return null;
+        })}
+    </div>
+) : cell.output ? (
+    // fallback for old notebooks that still use `output` string
+    <div className="p-4 bg-black/40 border-t border-white/5 font-mono text-[11px] text-white/40 whitespace-pre-wrap">
+        {cell.output}
+    </div>
+) : null}
                                     </div>
                                 )}
                             </div>

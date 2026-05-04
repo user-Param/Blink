@@ -116,6 +116,80 @@ def validate_ipynb(code):
     except Exception as e:
         return jsonify({'valid': False, 'error': f'Invalid Notebook Format: {str(e)}'})
 
+
+def execute_python_cell_with_capture(code):
+    """
+    Run Python code in a subprocess with a wrapper that captures
+    stdout and any matplotlib figures. Returns a list of output dicts.
+    """
+    wrapper = r"""
+import sys, json, base64, io, traceback
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+# Capture stdout
+_old_stdout = sys.stdout
+_captured = io.StringIO()
+sys.stdout = _captured
+
+_result_outputs = []
+
+try:
+    exec(sys.argv[1])
+finally:
+    sys.stdout = _old_stdout
+    _text = _captured.getvalue()
+    if _text.strip():
+        _result_outputs.append({"type": "text", "data": _text.rstrip()})
+
+    # Check for any figures created
+    _fig_nums = plt.get_fignums()
+    if _fig_nums:
+        for _num in _fig_nums:
+            _fig = plt.figure(_num)
+            _buf = io.BytesIO()
+            _fig.savefig(_buf, format='png')
+            _buf.seek(0)
+            _img_b64 = base64.b64encode(_buf.read()).decode('ascii')
+            _result_outputs.append({"type": "image/png", "data": _img_b64})
+            plt.close(_fig)
+
+    # Print JSON result to stdout for the parent to capture
+    print(json.dumps(_result_outputs))
+"""
+
+    try:
+        # Pass the user code as an argument to the wrapper script
+        result = subprocess.run(
+            [sys.executable, '-c', wrapper, code],
+            capture_output=True, text=True, timeout=10
+        )
+        # The wrapper's final print is the JSON outputs list
+        if result.stdout.strip():
+            try:
+                outputs = json.loads(result.stdout.strip())
+                return outputs
+            except json.JSONDecodeError:
+                # If something went wrong, return the raw output as text
+                return [{"type": "text", "data": result.stdout.strip()}]
+        else:
+            return [{"type": "text", "data": result.stderr.strip()}] if result.stderr.strip() else []
+    except subprocess.TimeoutExpired:
+        return [{"type": "error", "data": "Execution timed out (>10s)"}]
+    except Exception as e:
+        return [{"type": "error", "data": f"Internal error: {str(e)}"}]
+
+
+
+
+
+
+
+
+
+
+
 @app.route('/run', methods=['POST'])
 def run_code():
     """Execute code from the editor"""
@@ -149,6 +223,41 @@ def run_code():
             
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+
+@app.route('/run-cell', methods=['POST'])
+def run_cell():
+    """Execute a single notebook cell and return rich outputs (text, images, error)."""
+    try:
+        data = request.json
+        code = data.get('code', '')
+        language = data.get('language', 'python')
+        
+        if not code:
+            return jsonify({'error': 'No code provided'}), 400
+        
+        # Only Python cells can produce rich output; C++ would need separate handling.
+        if language == 'python':
+            outputs = execute_python_cell_with_capture(code)
+        else:
+            # For other languages, fall back to the existing subprocess runner
+            # but we still return a uniform output format.
+            result = subprocess.run(
+                [sys.executable, '-c', code],
+                capture_output=True, text=True, timeout=10
+            )
+            stdout = result.stdout.strip()
+            stderr = result.stderr.strip()
+            outputs = []
+            if stdout:
+                outputs.append({"type": "text", "data": stdout})
+            if stderr:
+                outputs.append({"type": "error", "data": stderr})
+        
+        return jsonify({'success': True, 'outputs': outputs})
+    except Exception as e:
+        return jsonify({'success': False, 'outputs': [{'type': 'error', 'data': str(e)}]}), 500
+
 
 def run_python(code):
     """Execute Python code"""
@@ -308,6 +417,6 @@ def health():
 
 if __name__ == '__main__':
     port = int(os.getenv('RESEARCH_BACKEND_PORT', '5001'))
-    print("🚀 Research Executor Backend starting on http://localhost:" + str(port))
-    print(f"📁 Strategies stored in: {STRATEGY_DIR}")
+    print("Research Executor Backend starting on http://localhost:" + str(port))
+    print(f"Strategies stored in: {STRATEGY_DIR}")
     app.run(debug=False, host='0.0.0.0', port=port)

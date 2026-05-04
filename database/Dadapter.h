@@ -7,6 +7,7 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <mutex>
 #include <nlohmann/json.hpp>   
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -35,6 +36,7 @@ private:
     std::atomic<bool> running_{true};
     std::atomic<bool> streaming_{false};
     std::thread stream_thread_;
+    std::mutex ws_mutex_;
 
     // Streaming methods
     void start_streaming();

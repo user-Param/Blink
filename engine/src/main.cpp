@@ -9,30 +9,6 @@
 #include "../include/algo/sma.h"
 #include "../include/algo/mean_reversion.h"
 
-// A simple algorithm that places orders based on price movement
-class SimpleScalper : public Algo {
-public:
-    void onTick(const MarketData& data) override {
-        // std::cout << "[Algo] Tick: " << data.price << std::endl;
-        
-        if (last_price_ > 0) {
-            // If price drops by more than 0.5, Buy
-            if (data.price < last_price_ - 0.5) {
-                //std::cout << "[Algo] Price Drop! Attempting to BUY." << std::endl;
-                buy(data.symbol, data.price, 1);
-            }
-            // If price rises by more than 0.5, Sell
-            else if (data.price > last_price_ + 0.5) {
-                //std::cout << "[Algo] Price Spike! Attempting to SELL." << std::endl;
-                sell(data.symbol, data.price, 1);
-            }
-        }
-        last_price_ = data.price;
-    }
-private:
-    double last_price_ = 0;
-};
-
 int main(int argc, char** argv)
 {
     try
@@ -46,7 +22,7 @@ int main(int argc, char** argv)
         auto algoMgr = std::make_shared<AlgoManager>(riskMgr);
         
         // 3. Add Algorithms
-        algoMgr->addAlgo(std::make_unique<SimpleScalper>());
+        // Removed SimpleScalper as it's not defined in the project headers yet
         algoMgr->addAlgo(std::make_unique<SimpleMovingAverage>());
         algoMgr->addAlgo(std::make_unique<MeanReversion>());
 
