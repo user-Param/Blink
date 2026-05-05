@@ -60,7 +60,7 @@ const TradeNavbar = ({ isConnected, marketData }: TradeNavbarProps) => {
           <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-red-500"}`}></span>
           <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest flex items-center gap-2">
             <Globe size={10} className={isConnected ? "animate-spin-slow" : ""} />
-            {isConnected ? "Live Network Feed" : "Reconnecting..."}
+            {isConnected ? "Connected" : "Reconnecting..."}
           </span>
         </div>
       </div>

@@ -1,82 +1,27 @@
-import { Plus, FileCode, Code, Book, X, FileText } from "lucide-react";
-import type { FileType } from "../../types/editor";
+import { useState, useEffect, useRef } from "react";
+import Explorer from "../components/editor/explorer";
+import TerminalUI from "../components/editor/terminal";
+import EditorMain from "../components/editor/editor-main";
+import { useWebSocket } from "../hooks/useWebSocket";
+import type { FileType } from "../types/editor";
+import { Shield, AlertCircle, X, CheckCircle2, Play } from "lucide-react";
 
-type Props = {
-  files: FileType[];
-  setFiles: React.Dispatch<React.SetStateAction<FileType[]>>;
-  activeFileId: string;
-  setActiveFileId: (id: string) => void;
-};
+const BACKEND_URL =
+  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
 
-const Explorer = ({ files, setFiles, activeFileId, setActiveFileId }: Props) => {
-  const addFile = (language: "cpp" | "python" | "ipynb") => {
-    const id = Date.now().toString();
-    const extension = language === "ipynb" ? "ipynb" : language === "cpp" ? "cpp" : "py";
-    const name = `strategy_${files.length + 1}.${extension}`;
-    const path = language === "ipynb" ? `research/${name}` : `engine/algos/${name}`;
-    
-    let content = "";
-    if (language === "cpp") {
-        content = `#include <iostream>
-#include <string>
-#include <map>
-#include <vector>
+const Editor = () => {
+  const { isConnected, marketData, subscribe, sendMessage } = useWebSocket();
 
-// Strategy Configuration
-struct MarketData {
-    double price;
-    double bid;
-    double ask;
-    std::string symbol;
-    long timestamp;
-};
-
-// Algo Base Class (simplified)
-class Algo {
-public:
-    virtual ~Algo() = default;
-    virtual void onTick(const MarketData& md) = 0;
-};
-
-// Your Strategy Implementation
-class MyStrategy : public Algo {
-private:
-    std::string symbol_;
-    double lastPrice_;
-    
-public:
-    MyStrategy(const std::string& symbol) 
-        : symbol_(symbol), lastPrice_(0.0) {}
-    
-    void onTick(const MarketData& md) override {
-        // Your optimized C++ trading logic here
-        if (md.price > lastPrice_ * 1.01) {
-            std::cout << "Price spike detected! Buy signal" << std::endl;
-        } else if (md.price < lastPrice_ * 0.99) {
-            std::cout << "Price drop detected! Sell signal" << std::endl;
-        }
-        lastPrice_ = md.price;
-    }
-};
-
-// Test the strategy
-int main() {
-    MyStrategy strategy("BTCUSDT");
-    
-    // Simulate market data
-    MarketData md = {.price = 50000, .bid = 49999, .ask = 50001, .symbol = "BTCUSDT", .timestamp = 0};
-    strategy.onTick(md);
-    
-    std::cout << "Strategy compiled and executed successfully!" << std::endl;
-    return 0;
-}`;
-    } else if (language === "ipynb") {
-      content = JSON.stringify([
+  const [files, setFiles] = useState<FileType[]>([
+    {
+      id: "1",
+      name: "research_notebook.ipynb",
+      content: JSON.stringify([
         { id: "c1", type: "markdown", content: "# Research Notebook\n\nDocument your hypothesis and analysis here." },
         {
-            id: "c2",
-            type: "code",
-            content: `import numpy as np
+          id: "c2",
+          type: "code",
+          content: `import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -129,107 +74,199 @@ print(df.to_string(index=False))
 # 4. Intentional Error (uncomment to test)
 # ============================================
 # x = 1 / 0`,
-            output: ""
+          output: ""
         }
-      ]);
-    } else {
-        content = `import matplotlib.pyplot as plt
-import numpy as np
+      ]),
+      language: "ipynb",
+      path: "research/research_notebook.ipynb",
+    },
+    {
+      id: "2",
+      name: "sma_crossover.py",
+      content: `# Simple Moving Average Crossover Strategy
+import time
 
-# Generate 50 fake prices (simple upward trend with noise)
-prices = 100 + np.cumsum(np.random.randn(50) * 2)
+class SMACrossover:
+    def __init__(self, short_period=5, long_period=20):
+        self.short_period = short_period
+        self.long_period = long_period
+        self.prices = []
+        print(f"SMA Crossover Initialized (Short: {short_period}, Long: {long_period})")
 
-# Create the plot
-plt.figure(figsize=(10, 5))
-plt.plot(prices, marker='o', linestyle='-', color='lime', linewidth=2, markersize=4)
-plt.title('Simple Price Trend', fontsize=14)
-plt.xlabel('Time (minutes)')
-plt.ylabel('Price (USDT)')
-plt.grid(True, alpha=0.3)
+    def on_tick(self, price):
+        self.prices.append(price)
+        if len(self.prices) > self.long_period:
+            self.prices.pop(0)
+            
+        if len(self.prices) < self.long_period:
+            return "WAITING"
+            
+        short_sma = sum(self.prices[-self.short_period:]) / self.short_period
+        long_sma = sum(self.prices[-self.long_period:]) / self.long_period
+        
+        if short_sma > long_sma:
+            return "BUY"
+        elif short_sma < long_sma:
+            return "SELL"
+        return "HOLD"`,
+      language: "python",
+      path: "engine/algos/sma_crossover.py",
+    },
+    {
+      id: "3",
+      name: "rsi_strategy.py",
+      content: `# RSI Mean Reversion Strategy
+import time
 
-# Show the chart (opens a new window)
-plt.show()`;
-    }
+class RSIStrategy:
+    def __init__(self, period=14, overbought=70, oversold=30):
+        self.period = period
+        self.overbought = overbought
+        self.oversold = oversold
+        self.prices = []
+        print(f"RSI Strategy Initialized (Period: {period}, OB: {overbought}, OS: {oversold})")
 
-    const newFile: FileType = { id, name, content, language, path };
-    setFiles([...files, newFile]);
-    setActiveFileId(id);
+    def calculate_rsi(self, prices):
+        if len(prices) <= self.period:
+            return 50
+        
+        gains = []
+        losses = []
+        for i in range(1, len(prices)):
+            diff = prices[i] - prices[i-1]
+            if diff >= 0:
+                gains.append(diff)
+                losses.append(0)
+            else:
+                gains.append(0)
+                losses.append(abs(diff))
+        
+        avg_gain = sum(gains[-self.period:]) / self.period
+        avg_loss = sum(losses[-self.period:]) / self.period
+        
+        if avg_loss == 0:
+            return 100
+        
+        rs = avg_gain / avg_loss
+        return 100 - (100 / (1 + rs))
+
+    def on_tick(self, price):
+        self.prices.append(price)
+        if len(self.prices) > self.period + 1:
+            self.prices.pop(0)
+            
+        if len(self.prices) < self.period + 1:
+            return "WAITING"
+            
+        rsi = self.calculate_rsi(self.prices)
+        
+        if rsi < self.oversold:
+            return "BUY"
+        elif rsi > self.overbought:
+            return "SELL"
+        return "HOLD"`,
+      language: "python",
+      path: "engine/algos/rsi_strategy.py",
+    },
+  ]);
+
+  const [activeFile, setActiveFile] = useState<FileType>(files[0]);
+  const [output, setOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [showDeployWarning, setShowDeployWarning] = useState(false);
+
+  const [sidebarWidth, setSidebarWidth] = useState(13);
+  const [terminalHeight, setTerminalHeight] = useState(30);
+
+  const isDraggingSidebar = useRef(false);
+  const isDraggingTerminal = useRef(false);
+
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const startSidebar = useRef(0);
+  const startTerminal = useRef(0);
+
+  useEffect(() => {
+    subscribe("price_");
+    subscribe("bid_");
+    subscribe("ask_");
+  }, [subscribe]);
+
+  const updateFileContent = (content: string) => {
+    const updated = files.map((f) =>
+      f.id === activeFile.id ? { ...f, content } : f
+    );
+    setFiles(updated);
+    setActiveFile({ ...activeFile, content });
   };
 
-  const deleteFile = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    const newFiles = files.filter(f => f.id !== id);
-    setFiles(newFiles);
-    if (activeFileId === id && newFiles.length > 0) {
-        setActiveFileId(newFiles[0].id);
+  const handleSave = async () => {
+    setOutput("Validating strategy components...\n");
+    try {
+      const res = await fetch(`${BACKEND_URL}/validate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: activeFile.content,
+          language: activeFile.language
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.valid) {
+        setOutput("Validation successful. Strategy structure is correct.\n");
+        setShowDeployWarning(true);
+      } else {
+        setOutput(`Validation failed:\n${data.error}\n`);
+      }
+    } catch (err) {
+      setOutput("Validation backend error. Please ensure Research Executor is running on port 5001.\n");
     }
   };
 
-  return (
-    <div className="flex flex-col h-full bg-[#202020]">
-      <div className="p-3 border-b border-white/5 space-y-2">
-        <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest px-1">New Strategy</p>
-        <div className="grid grid-cols-3 gap-1">
-            <button 
-                onClick={() => addFile("cpp")}
-                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-blue-500/20 border border-white/5 hover:border-blue-500/50 transition-all group"
-                title="New C++ Strategy"
-            >
-                <FileCode size={14} className="text-blue-400 mb-1" />
-                <span className="text-[8px] font-bold text-white/40 group-hover:text-white transition-colors">C++</span>
-            </button>
-            <button 
-                onClick={() => addFile("ipynb")}
-                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-[#FF6D1F]/20 border border-white/5 hover:border-[#FF6D1F]/50 transition-all group"
-                title="New Notebook"
-            >
-                <Book size={14} className="text-[#FF6D1F] mb-1" />
-                <span className="text-[8px] font-bold text-white/40 group-hover:text-white transition-colors">NB</span>
-            </button>
-            <button 
-                onClick={() => addFile("python")}
-                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white/5 hover:bg-green-500/20 border border-white/5 hover:border-green-500/50 transition-all group"
-                title="New Python Script"
-            >
-                <Code size={14} className="text-green-400 mb-1" />
-                <span className="text-[8px] font-bold text-white/40 group-hover:text-white transition-colors">PY</span>
-            </button>
-        </div>
-      </div>
+  const confirmSave = async () => {
+    setOutput("Persisting strategy to simulation engine...\n");
+    try {
+      const res = await fetch(`${BACKEND_URL}/save-strategy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: activeFile.name.split('.')[0],
+          content: activeFile.content,
+          language: activeFile.language
+        }),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setShowDeployWarning(false);
+        setOutput(`Strategy successfully saved and deployed to simulation engine!\nLocation: ${data.path}\n`);
 
-      <div className="flex-1 overflow-y-auto py-2">
-        <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest px-4 mb-2">Files</p>
-        {files.map((file) => (
-            <div
-                key={file.id}
-                onClick={() => setActiveFileId(file.id)}
-                className={`group flex items-center justify-between px-4 py-2.5 cursor-pointer transition-all ${
-                    activeFileId === file.id ? "bg-[#FF6D1F]/10 text-white" : "text-white/40 hover:bg-white/5 hover:text-white/70"
-                }`}
-            >
-                <div className="flex items-center gap-3 overflow-hidden">
-                    {file.language === "cpp" ? <FileCode size={14} className="shrink-0 text-blue-400" /> : 
-                     file.language === "ipynb" ? <Book size={14} className="shrink-0 text-[#FF6D1F]" /> : 
-                     <Code size={14} className="shrink-0 text-green-400" />}
-                    <div className="flex flex-col overflow-hidden">
-                        <span className="text-[11px] font-medium truncate">{file.name}</span>
-                        <span className="text-[8px] text-white/20 truncate">{file.path}</span>
-                    </div>
-                </div>
-                <button 
-                    onClick={(e) => deleteFile(e, file.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded transition-all"
-                >
-                    <X size={12} />
-                </button>
-            </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+        sendMessage(JSON.stringify({
+          request: "save_strategy",
+          data: {
+            name: activeFile.name.replace(/\.[^/.]+$/, ""),
+            language: activeFile.language,
+            content: activeFile.content,
+            path: data.path
+          }
+        }));
+      } else {
+        setOutput(`Save failed: ${data.error}\n`);
+      }
+    } catch (err) {
+      setOutput("Save backend error. Please ensure Research Executor is running on port 5001.\n");
+    }
+  };
 
-export default Explorer;  "Content-Type": "application/json",
+  const runCode = async () => {
+    setOutput("Running...\n");
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/run`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           code: activeFile.content,
@@ -248,6 +285,7 @@ export default Explorer;  "Content-Type": "application/json",
       setOutput("Research Executor backend not running or connection failed. Make sure port 5001 is open.");
     }
   };
+
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       if (isDraggingSidebar.current) {
