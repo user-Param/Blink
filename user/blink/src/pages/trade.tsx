@@ -5,6 +5,7 @@ import TradeOrderBook from "../components/trade/trade-orderbook";
 import TradeChart from "../components/trade/trade-chart";
 import TradeControlPanel from "../components/trade/trade-controlpannel";
 import TradePositions from "../components/trade/trade-positions";
+import Symbol from "../components/trade/trade-symbols";
 import { Group, Panel } from "react-resizable-panels";
 
 
@@ -22,37 +23,42 @@ export const Trade = () => {
     }, [isMarketConnected, subscribe]);
 
     return (
-        <div className="h-full flex flex-col bg-[#0a0a0a] text-white overflow-hidden">
+        <div className="h-screen flex flex-1 overflow-hidden">
 
+        <div className="flex-1 text-white overflow-hidden">     
             <TradeNavbar isConnected={isOrderConnected && isMarketConnected} marketData={marketData} />
-
-
-            <div className="flex-1 flex overflow-hidden min-h-0 gap-3 p-3">
-
-                {/* Left: Order Book */}
-                <div className="w-64 shrink-0">
+            <div className="flex h-[50%] justify-evenly ">
+                <div className="min-w-[30%] ">
                     <TradeOrderBook marketData={marketData} />
                 </div>
-
-                {/* Center: Chart & Positions (now expanded) */}
-                <div className="flex-1 flex flex-col min-w-0">
-                    <div className="flex-1 min-h-0 mb-3">
+                
+                    <div className="min-w-[40%] flex-1">
                         <TradeChart />
                     </div>
-
-                    {/* Positions Panel takes full remaining space */}
-                    <div className="flex-1 min-h-0">
-                        <TradePositions marketData={marketData} />
-                    </div>
+                
+            </div> 
+            <div className="flex">
+                
+                <div className="h-full flex-1">
+                    <TradePositions marketData={marketData} />
                 </div>
+            </div>
 
-                {/* Right: Control Panel Only */}
-                <div className=" shrink-0">
+                    
+        </div>
+            
+            <div className="h-[100%] max-w-[30%] flex-1 flex flex-col">
+                <div className="flex-1">
+                    <Symbol />
+                </div>
+                <div className="flex-1 mt-2">
                     <TradeControlPanel marketData={marketData} sendMessage={sendOrderMessage} />
                 </div>
-
+                
+                
             </div>
         </div>
+        
     );
 };
 

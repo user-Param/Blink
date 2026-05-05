@@ -17,7 +17,7 @@ interface LiveOrder {
 }
 
 const TradePositions = () => {
-  const [activeTab, setActiveTab] = useState("Positions");
+  const [activeTab, setActiveTab] = useState("Open Orders");
   const { positions, summary, orders, isConnected } = useOrderTracking();
   const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([]);
   const liveOrdersRef = useRef<LiveOrder[]>([]);
@@ -93,7 +93,8 @@ const TradePositions = () => {
   }, []);
 
   return (
-    <div className="flex-1 border-t border-white/10 flex flex-col max-h-100 overflow-hidden">
+    <div className="flex h-full
+    flex-col overflow-hidden">
       {/* Tabs Header */}
       <div className="flex border-b border-white/5 bg-[#111] shrink-0">
         {tabs.map((tab) => (
@@ -520,44 +521,7 @@ const TradePositions = () => {
         ) : null}
       </div>
 
-      {/* Footer Info */}
-      <div className="h-8 border-t border-white/5 bg-[#0a0a0a] flex items-center px-4 justify-between shrink-0">
-        <div className="flex gap-6 items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-black text-white/20 uppercase">
-              Equity
-            </span>
-            <span className="text-[10px] font-mono text-white font-bold">
-              ${summary.total_equity.toFixed(2)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-black text-white/20 uppercase">
-              Available
-            </span>
-            <span className="text-[10px] font-mono text-white font-bold">
-              ${summary.available_margin.toFixed(2)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[9px] font-black text-white/20 uppercase">
-              Unrealized P&L
-            </span>
-            <span
-              className={`text-[10px] font-mono font-bold ${
-                summary.total_unrealized_pnl >= 0
-                  ? "text-green-400"
-                  : "text-red-400"
-              }`}
-            >
-              ${Math.abs(summary.total_unrealized_pnl).toFixed(2)}
-            </span>
-          </div>
-        </div>
-        <div className="text-[9px] font-black text-[#FF6D1F] uppercase tracking-widest animate-pulse">
-          {positions.length > 0 ? "Trading Active" : "Ready"}
-        </div>
-      </div>
+      
     </div>
   );
 };

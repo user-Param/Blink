@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from "react";
 import { Plus, FileCode, Code, Book, X, FileText } from "lucide-react";
 import type { FileType } from "../../types/editor";
 

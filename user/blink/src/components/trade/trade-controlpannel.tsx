@@ -65,7 +65,7 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
   };
 
   return (
-    <div className="w-80 flex flex-col bg-[#111] shrink-0">
+    <div className="w-[100%] h-[100%] flex flex-col bg-[#111]">
       {/* Mode Switcher */}
       <div className="p-4 flex gap-1 bg-[#0d0d0d] border-b border-white/5">
         <button 
