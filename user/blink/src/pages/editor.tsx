@@ -5,6 +5,7 @@ import EditorMain from "../components/editor/editor-main";
 import { useWebSocket } from "../hooks/useWebSocket";
 import type { FileType } from "../types/editor";
 import { Shield, AlertCircle, X, CheckCircle2, Play } from "lucide-react";
+import AIPrompt from "../components/ai/ai";
 
 const BACKEND_URL =
   (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
@@ -467,6 +468,7 @@ class RSIStrategy:
           </div>
         </div>
       )}
+      <AIPrompt />
     </div>
   );
 };
