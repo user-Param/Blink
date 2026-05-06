@@ -15,20 +15,32 @@ const AIPrompt = () => {
     setLoading(true);
     setError('');
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      // Switched to gemini-2.5-flash-lite which is verified to have quota on this API key.
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      
       const result = await model.generateContent(
         'You are a trading strategy assistant. Respond ONLY with Python code, no markdown or explanations.\n\n' + prompt
       );
+      
       const text = result.response.text();
       setResponse(text);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      console.error("AI Generation Error:", err);
+      
+      const msg = err.message || '';
+      if (msg.includes('404')) {
+        setError('Model not found. Please verify that your API key has access to the requested model in the Google AI Studio.');
+      } else if (msg.includes('429') || msg.toLowerCase().includes('quota')) {
+        setError('API Quota exceeded. Please wait a few seconds before trying again.');
+      } else {
+        setError(msg || 'Something went wrong during generation.');
+      }
     }
     setLoading(false);
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-[#1e1e1e] border border-white/10 rounded-xl text-white">
+    <div className="flex flex-col gap-4 p-4 bg-[#1e1e1e] border border-white/10 text-white">
       <h3 className="text-sm font-bold text-[#FF6D1F]">AI Code Generator</h3>
       <textarea
         className="w-full h-20 bg-white/5 border border-white/10 rounded-lg p-3 text-sm placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] resize-none"
