@@ -405,9 +405,9 @@ class RSIStrategy:
           style={{ flexBasis: `${terminalHeight}%`, flexShrink: 0 }}
         >
           <div className="p-2 border-b border-white/10 text-xs text-white/50">
-            {isConnected ? "Connected" : "Disconnected"}
+            
           </div>
-
+          <AIPrompt />
           <div className="flex-1 min-h-0">
             <TerminalUI output={output} />
           </div>
@@ -468,7 +468,6 @@ class RSIStrategy:
           </div>
         </div>
       )}
-      <AIPrompt />
     </div>
   );
 };
