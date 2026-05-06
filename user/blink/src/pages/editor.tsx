@@ -15,6 +15,13 @@ const Editor = () => {
 
   const [files, setFiles] = useState<FileType[]>([
     {
+    id: "ai-file",                          // fixed id
+    name: "AI Assistant",
+    language: "ai",
+    content: "",                            // not used for rendering
+    path: "ai/assistant"                    // just for display
+  },
+    {
       id: "1",
       name: "research_notebook.ipynb",
       content: JSON.stringify([
@@ -169,6 +176,7 @@ class RSIStrategy:
       language: "python",
       path: "engine/algos/rsi_strategy.py",
     },
+    
   ]);
 
   const [activeFile, setActiveFile] = useState<FileType>(files[0]);
@@ -377,10 +385,14 @@ class RSIStrategy:
           </div>
 
           <div className="flex-1 overflow-hidden">
-            <EditorMain
-              activeFile={activeFile}
-              updateFileContent={updateFileContent}
-            />
+            {activeFile.language === "ai" ? (
+    <AIPrompt />
+  ) : (
+    <EditorMain
+      activeFile={activeFile}
+      updateFileContent={updateFileContent}
+    />
+  )}
           </div>
         </div>
 
@@ -407,7 +419,7 @@ class RSIStrategy:
           <div className="p-2 border-b border-white/10 text-xs text-white/50">
             
           </div>
-          <AIPrompt />
+          
           <div className="flex-1 min-h-0">
             <TerminalUI output={output} />
           </div>
