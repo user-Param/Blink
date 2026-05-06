@@ -28,11 +28,11 @@ export const Trade = () => {
         <div className="flex-1 text-white overflow-hidden">     
             <TradeNavbar isConnected={isOrderConnected && isMarketConnected} marketData={marketData} />
             <div className="flex h-[50%] justify-evenly ">
-                <div className="min-w-[30%] ">
+                <div className="min-w-[30%] border border-white/30">
                     <TradeOrderBook marketData={marketData} />
                 </div>
                 
-                    <div className="min-w-[40%] flex-1">
+                    <div className="min-w-[40%] flex-1 border border-white/30">
                         <TradeChart />
                     </div>
                 

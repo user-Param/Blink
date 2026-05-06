@@ -15,7 +15,7 @@ const TradeNavbar = ({ isConnected, marketData }: TradeNavbarProps) => {
   const volume24h = 12450.85; // Mock volume
 
   return (
-    <div className="h-14 border-b border-white/10 flex items-center px-4 gap-8 bg-[#111] shrink-0">
+    <div className="h-14 border border-white/30 flex items-center px-4 gap-8 bg-[#111] shrink-0">
       <div className="flex items-center gap-3">
         <div className="flex -space-x-2">
           <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-[10px] font-bold border border-black shadow-lg shadow-orange-500/20">B</div>
@@ -56,13 +56,7 @@ const TradeNavbar = ({ isConnected, marketData }: TradeNavbarProps) => {
       </div>
 
       <div className="ml-auto flex items-center gap-4">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5">
-          <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-red-500"}`}></span>
-          <span className="text-[10px] text-white/50 font-bold uppercase tracking-widest flex items-center gap-2">
-            <Globe size={10} className={isConnected ? "animate-spin-slow" : ""} />
-            {isConnected ? "Connected" : "Reconnecting..."}
-          </span>
-        </div>
+        
       </div>
     </div>
   );

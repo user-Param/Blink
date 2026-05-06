@@ -36,7 +36,7 @@ export const Profile = () => {
   ];
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0a0a0a] text-white p-8">
+    <div className="h-full overflow-y-auto  text-white p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* ---------- Profile Header ---------- */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/10 p-8 shadow-2xl">

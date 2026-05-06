@@ -32,6 +32,7 @@ const Navbar = ({ setActivePage, activePage }: NavbarProps) => {
     { name: "Trade", id: "trade", action: () => { setActivePage("trade"); sendMode("_Live"); } },
     { name: "Research", id: "research", action: () => setActivePage("research") },
     { name: "Simulate", id: "simulate", action: () => { setActivePage("simulate"); sendMode("_Backtest"); } },
+    { name: "Social", id: "social", action: () => setActivePage("social") },
     { name: "Param", id: "profile", action: () => setActivePage("profile") },
   ];
 

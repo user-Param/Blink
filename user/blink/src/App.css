@@ -1,0 +1,7 @@
+body {
+  margin: 0;
+  font-family: "Titillium Web", sans-serif;
+  font-optical-sizing: auto;   /* optional, makes it look sharper */
+  font-weight: 200;            /* default weight, adjust as needed */
+  font-style: normal;
+}

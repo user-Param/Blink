@@ -241,7 +241,7 @@ const Simulate = () => {
                         <select
                             value={selectedStrategyId}
                             onChange={(e) => setSelectedStrategyId(e.target.value)}
-                            className="bg-[#1e1e1e] border border-white/10 text-white text-xs rounded px-3 py-1.5 focus:outline-none focus:border-[#FF6D1F]"
+                            className="bg-[#202020] border border-white/10 text-white text-xs px-3 py-1.5 outline-none"
                         >
                             {strategies.length > 0 ? (
                                 strategies.map(s => (

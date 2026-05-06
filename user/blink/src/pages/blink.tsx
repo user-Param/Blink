@@ -6,6 +6,7 @@ import Simulate from "./simulate/simulate";
 import Docs from "./docs";
 import { Trade } from "./trade";
 import { Profile } from "./profile";
+import Social from "./social";
 
 const Blink = () => {
     const [activePage, setActivePage] = useState("home");
@@ -15,13 +16,28 @@ const Blink = () => {
                 <Navbar setActivePage={setActivePage} activePage={activePage}/>
             </div>
             <div>
-                {activePage === "home" && <Home setActivePage={setActivePage} />}
-                {activePage === "docs" && <Docs/>}
-                {activePage === "trade" && <Trade />}
-                {activePage === "research" && <Editor />}
-                {activePage === "simulate" && <Simulate />}
-                {activePage === "profile" && <Profile />}
-            </div>
+  <div className={activePage === "home" ? "" : "hidden"}>
+    <Home setActivePage={setActivePage} />
+  </div>
+  <div className={activePage === "docs" ? "" : "hidden"}>
+    <Docs />
+  </div>
+  <div className={activePage === "trade" ? "" : "hidden"}>
+    <Trade />
+  </div>
+  <div className={activePage === "research" ? "" : "hidden"}>
+    <Editor />
+  </div>
+  <div className={activePage === "simulate" ? "" : "hidden"}>
+    <Simulate />
+  </div>
+  <div className={activePage === "social" ? "" : "hidden"}>
+    <Social />
+  </div>
+  <div className={activePage === "profile" ? "" : "hidden"}>
+    <Profile />
+  </div>
+</div>
         </div>
     )
 }

@@ -40,7 +40,7 @@ const AIPrompt = () => {
   };
 
   return (
-    <div className="flex flex-col justify-center items-center bg-[#1e1e1e] border border-white/10 text-white h-full">
+    <div className="flex flex-col justify-center items-center bg-[#1e1e1e] border border-white/10 text-white h-full mb-10">
         
       {error && (
         <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs">
@@ -67,7 +67,7 @@ const AIPrompt = () => {
 
 
 
-      <div className='flex min-w-[50%] border border-white/2 rounded-full overflow-hidden'>
+      {/* <div className='flex min-w-[50%] border max-h-[10%] border-white/2 rounded-full overflow-hidden'>
       <textarea
         className=" min-h-[60%] w-[80%] bg-white/5 border border-white/10 text-xl p-2 pt-8 placeholder:text-white/20 outline-none focus:border-[#FF6D1F] border-l-xl"
         placeholder="Describe the strategy you want... (e.g., create a 50-day SMA crossover strategy)"
@@ -81,7 +81,24 @@ const AIPrompt = () => {
       >
         {loading ? 'Generating...' : 'Generate Code'}
       </button>
-        </div>
+        </div> */}
+
+        <div className="w-full max-w-3xl flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-2 py-1.5 focus-within:border-[#FF6D1F] transition-colors">
+        <textarea
+          className="flex-1 bg-transparent text-sm placeholder:text-white/30 outline-none resize-none px-3 py-1.5 max-h-20"
+          placeholder="Describe the strategy you want..."
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          rows={1}
+        />
+        <button
+          onClick={handleGenerate}
+          disabled={loading || !prompt.trim()}
+          className="bg-[#FF6D1F] hover:bg-[#e55d1a] text-white text-sm font-semibold px-6 py-2 rounded-full disabled:opacity-50 transition-colors whitespace-nowrap"
+        >
+          {loading ? 'Generating...' : 'Generate'}
+        </button>
+      </div>
       
     </div>
   );
