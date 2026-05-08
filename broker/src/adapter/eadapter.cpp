@@ -1,10 +1,17 @@
 #include "adapter/eadapter.h"
 #include "exchange/exchange1.h"
+#include "exchange/exchange2.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
 
-EAdapter::EAdapter() : exchange_(std::make_unique<Exchange1>()) {}
+EAdapter::EAdapter(ExchangeType type) : exchange_type_(type) {
+    if (exchange_type_ == ExchangeType::BINANCE) {
+        exchange1_ = std::make_unique<Exchange1>();
+    } else {
+        exchange2_ = std::make_unique<Exchange2>();
+    }
+}
 
 EAdapter::~EAdapter() {
     stop();
@@ -15,21 +22,35 @@ void EAdapter::set_symbols(const std::vector<std::string>& symbols) {
 }
 
 void EAdapter::connect_to_exchange() {
-    exchange_->connect();
+    if (exchange_type_ == ExchangeType::BINANCE) {
+        exchange1_->connect();
+    } else {
+        exchange2_->connect();
+    }
     std::cout << "Connected to exchange" << std::endl;
 }
 
 void EAdapter::subscribe_symbols() {
-    exchange_->subscribe(symbols_);
+    if (exchange_type_ == ExchangeType::BINANCE) {
+        exchange1_->subscribe(symbols_);
+    } else {
+        exchange2_->subscribe(symbols_);
+    }
     std::cout << "Subscribed to " << symbols_.size() << " symbols" << std::endl;
 }
 
 void EAdapter::on_update() {
-    exchange_->set_callback([this](const std::string& symbol, double price, double bid, double ask, long ts) {
+    auto callback = [this](const std::string& symbol, double price, double bid, double ask, long ts) {
         if (external_cb_) {
             external_cb_(symbol, price, bid, ask, ts);
         }
-    });
+    };
+
+    if (exchange_type_ == ExchangeType::BINANCE) {
+        exchange1_->set_callback(callback);
+    } else {
+        exchange2_->set_callback(callback);
+    }
 }
 
 void EAdapter::run() {
@@ -58,6 +79,26 @@ void EAdapter::stop() {
         worker_thread_.join();
     }
     std::cout << "EAdapter stopped" << std::endl;
+}
+
+
+void EAdapter::set_exchange(ExchangeType type) {
+    if (exchange_type_ == type) return;
+    
+    exchange_type_ = type;
+    if (exchange_type_ == ExchangeType::BINANCE) {
+        exchange2_.reset();
+        exchange1_ = std::make_unique<Exchange1>();
+    } else {
+        exchange1_.reset();
+        exchange2_ = std::make_unique<Exchange2>();
+    }
+    
+    if (running_) {
+        on_update();
+        connect_to_exchange();
+        subscribe_symbols();
+    }
 }
 
 

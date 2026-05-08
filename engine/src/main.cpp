@@ -1,13 +1,17 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <thread>
 #include <boost/asio/signal_set.hpp>
 #include "../include/algoManager.h"
 #include "../include/riskManager.h"
 #include "../include/algo.h"
 #include "../include/engine.h"
-#include "../include/algo/sma.h"
-#include "../include/algo/mean_reversion.h"
+// #include "../include/algo/sma.h"
+// #include "../include/algo/mean_reversion.h"
+
+// A simple algorithm that places orders based on price movement
+
 
 int main(int argc, char** argv)
 {
@@ -22,9 +26,12 @@ int main(int argc, char** argv)
         auto algoMgr = std::make_shared<AlgoManager>(riskMgr);
         
         // 3. Add Algorithms
-        // Removed SimpleScalper as it's not defined in the project headers yet
-        algoMgr->addAlgo(std::make_unique<SimpleMovingAverage>());
-        algoMgr->addAlgo(std::make_unique<MeanReversion>());
+        // algoMgr->addAlgo(std::make_unique<SimpleScalper>());
+        // algoMgr->addAlgo(std::make_unique<SimpleMovingAverage>());
+        // algoMgr->addAlgo(std::make_unique<MeanReversion>());
+        
+        // Load Python strategies
+        algoMgr->loadStrategies("../algos");
 
         // 4. Initialize Engine (Connects to Datafeed on 9000)
         Engine engine(algoMgr);

@@ -13,10 +13,10 @@ public:
     
     void setManager(AlgoManager* mgr) { manager_ = mgr; }
 
-protected:
     bool buy(const std::string& symbol, double price, int quantity);
     bool sell(const std::string& symbol, double price, int quantity);
 
+protected:
     AlgoManager* manager_ = nullptr;
 };
 

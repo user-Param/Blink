@@ -15,7 +15,7 @@ int main() {
         // Verify API keys are configured
         std::string api_key = config.get("BINANCE_API_KEY", "");
         if (api_key == "test_api_key_12345" || api_key.empty()) {
-            std::cout << "ℹ️  Note: Using test mode. Update .env with real BINANCE credentials for live trading.\n" << std::endl;
+            std::cout << "Note: Using test mode. Update .env with real BINANCE credentials for live trading.\n" << std::endl;
         }
         
         // Create OAdapter
@@ -32,18 +32,18 @@ int main() {
         boost::asio::io_context ioc;
         boost::asio::signal_set signals(ioc, SIGINT, SIGTERM);
         signals.async_wait([&](const boost::system::error_code&, int) {
-            std::cout << "\n✓ Executor shutdown signal received." << std::endl;
+            std::cout << "\n Executor shutdown signal received." << std::endl;
             ioc.stop();
         });
 
-        std::cout << "✓ Executor is active and ready to receive orders...\n" << std::endl;
+        std::cout << "Executor is active and ready to receive orders...\n" << std::endl;
         ioc.run();
         
         oadapter.stop();
-        std::cout << "✓ Executor stopped safely." << std::endl;
+        std::cout << "Executor stopped safely." << std::endl;
         
     } catch (const std::exception& e) {
-        std::cerr << "❌ Executor Fatal Error: " << e.what() << std::endl;
+        std::cerr << "Executor Fatal Error: " << e.what() << std::endl;
         return 1;
     }
     

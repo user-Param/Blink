@@ -1,11 +1,43 @@
-import { ArrowUpRight, Globe } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, ChevronDown } from "lucide-react";
 
 type TradeNavbarProps = {
   isConnected: boolean;
   marketData: any;
+  sendMessage?: (msg: string) => void;
 };
 
-const TradeNavbar = ({ isConnected, marketData }: TradeNavbarProps) => {
+
+type ExchangeOption = {
+  id: "BINANCE" | "JUPITER";
+  label: string;
+  color: string;        // accent colour for the badge
+  badgeBg: string;      // tailwind bg class
+  dotColor: string;     // live-dot colour
+};
+ 
+const EXCHANGES: ExchangeOption[] = [
+  {
+    id: "BINANCE",
+    label: "Binance",
+    color: "#F0B90B",
+    badgeBg: "bg-yellow-500/10 border-yellow-500/30 text-yellow-400",
+    dotColor: "bg-yellow-400",
+  },
+  {
+    id: "JUPITER",
+    label: "Jupiter",
+    color: "#7C3AED",
+    badgeBg: "bg-violet-500/10 border-violet-500/30 text-violet-400",
+    dotColor: "bg-violet-400",
+  },
+];
+
+
+const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedExchange, setSelectedExchange] = useState<ExchangeOption>(EXCHANGES[0]);
+
   // Calculate 24h change (mock for now - would come from backend)
   const price24hAgo = 69500;
   const currentPrice = marketData?.price || 0;
@@ -13,6 +45,25 @@ const TradeNavbar = ({ isConnected, marketData }: TradeNavbarProps) => {
   const high24h = currentPrice > 0 ? currentPrice * 1.01 : 0; // Mock: 1% above current
   const low24h = currentPrice > 0 ? currentPrice * 0.99 : 0;  // Mock: 1% below current
   const volume24h = 12450.85; // Mock volume
+
+  const handleSelectExchange = (ex: ExchangeOption) => {
+    if (ex.id === selectedExchange.id) {
+      setDropdownOpen(false);
+      return;
+    }
+    setSelectedExchange(ex);
+    setDropdownOpen(false);
+ 
+    // Notify the engine/broker via the existing WebSocket channel
+    if (sendMessage) {
+      sendMessage(
+        JSON.stringify({
+          type: "switch_exchange",
+          exchange: ex.id,          // "BINANCE" | "JUPITER"
+        })
+      );
+    }
+  };
 
   return (
     <div className="h-14 border border-white/30 flex items-center px-4 gap-8 bg-[#111] shrink-0">
@@ -58,6 +109,76 @@ const TradeNavbar = ({ isConnected, marketData }: TradeNavbarProps) => {
       <div className="ml-auto flex items-center gap-4">
         
       </div>
+
+      <div className="ml-auto relative">
+        {/* Trigger button */}
+        <button
+          onClick={() => setDropdownOpen((v) => !v)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-bold
+                       transition-all duration-200 hover:brightness-110 select-none
+                       ${selectedExchange.badgeBg}`}
+        >
+          {/* Live dot */}
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${selectedExchange.dotColor} ${
+              isConnected ? "animate-pulse" : "opacity-30"
+            }`}
+          />
+          {selectedExchange.label}
+          <ChevronDown
+            size={11}
+            className={`transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+ 
+        {/* Dropdown */}
+        {dropdownOpen && (
+          <div
+            className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-white/10
+                        bg-[#111] shadow-2xl z-50 overflow-hidden"
+          >
+            <div className="px-3 py-2 border-b border-white/5">
+              <p className="text-[9px] uppercase tracking-widest text-white/30 font-bold">
+                Data Source
+              </p>
+            </div>
+ 
+            {EXCHANGES.map((ex) => (
+              <button
+                key={ex.id}
+                onClick={() => handleSelectExchange(ex)}
+                className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-[11px] font-semibold
+                             transition-all duration-150 hover:bg-white/5
+                             ${
+                               selectedExchange.id === ex.id
+                                 ? "text-white bg-white/5"
+                                 : "text-white/50"
+                             }`}
+              >
+                {/* Colour dot */}
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: ex.color }}
+                />
+                {ex.label}
+                {selectedExchange.id === ex.id && (
+                  <span className="ml-auto text-[9px] text-white/30 font-bold uppercase tracking-wider">
+                    Active
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+ 
+      {/* Click-away overlay */}
+      {dropdownOpen && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setDropdownOpen(false)}
+        />
+      )}
     </div>
   );
 };

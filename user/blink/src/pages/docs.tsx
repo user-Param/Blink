@@ -62,8 +62,8 @@ const Docs = () => {
                 BLINK exists to give you that edge. Not just by simplifying and automating trading, but by equipping you with the tools used by top quant firms to operate in a truly 
                 competitive and unforgiving environment. 
               </p>
-              <p>
-
+              <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                
               </p>
             </div>
 

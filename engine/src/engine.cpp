@@ -18,7 +18,6 @@ void Engine::start()
 {
     std::cout << "Engine started" << std::endl;
     
-    // Automatically include backtest topics so we can receive historical data
     std::vector<std::string> initialTopics = topics_;
     bool hasPrice = false;
     for(const auto& t : initialTopics) if(t == "backtest_price_") hasPrice = true;
@@ -99,19 +98,17 @@ void Engine::readLoop()
     {
         try
         {
-            // Read a message (blocks until data arrives)
             ws_.read(buffer);
             std::string msg = beast::buffers_to_string(buffer.data());
             buffer.consume(buffer.size());
 
-            //std::cout << "[Engine][RAW] " << msg << std::endl;
-
+            std::cout << "[Engine][RAW] " << msg << std::endl;
             onData(msg);
         }
         catch (const std::exception &e)
         {
             if (running_)
-            { // only log if not shutting down
+            {
                 std::cerr << "Engine read error: " << e.what() << std::endl;
             }
             break;
@@ -125,20 +122,16 @@ void Engine::onData(const std::string &raw)
     {
         auto j = nlohmann::json::parse(raw);
 
-        // Handle specific responses
         if (j.contains("type") && j["type"] == "backtest_result") return;
 
-        // Handle explicit completion message
         if (j.contains("topic") && j["topic"] == "backtest_complete") {
             finalizeBacktest();
             return;
         }
 
-        // Check for backtest completion or data
         if (j.contains("topic") && j["topic"].get<std::string>().find("backtest_") != std::string::npos) {
             static int tick_count = 0;
             if (!is_backtesting_) {
-                // Initialize backtest
                 is_backtesting_ = true;
                 bt_capital_ = current_bt_capital_;
                 bt_equity_ = bt_capital_;
@@ -146,7 +139,7 @@ void Engine::onData(const std::string &raw)
                 bt_returns_.clear();
                 bt_max_equity_ = bt_capital_;
                 bt_max_drawdown_ = 0.0;
-                tick_count = 0; // Reset tick count for new backtest
+                tick_count = 0;
                 std::cout << "[Engine] Backtest started with capital: " << bt_capital_ << std::endl;
             }
 
@@ -157,7 +150,6 @@ void Engine::onData(const std::string &raw)
             data.ask = j["ask"];
             data.timestamp = j["timestamp"];
 
-            // Record price for return calculation
             static double last_price = 0;
             if (last_price > 0) {
                 bt_returns_.push_back((data.price - last_price) / last_price);
@@ -166,8 +158,6 @@ void Engine::onData(const std::string &raw)
 
             algoManager_->onTick(data);
             
-            // For now, simulate end of backtest after 100 ticks or specialized message
-            // In a real system, the Dadapter would send an "end_of_stream" message
             if (++tick_count >= 100) {
                 tick_count = 0;
                 last_price = 0;
@@ -179,32 +169,26 @@ void Engine::onData(const std::string &raw)
         MarketData data;
         data.symbol = j["symbol"];
         data.price = j["price"];
-        data.bid = j["bid"];
-        data.ask = j["ask"];
-        data.timestamp = j["timestamp"];
+        data.bid = j.value("bid", data.price - 0.01);
+        data.ask = j.value("ask", data.price + 0.01);
+        data.timestamp = j.value("timestamp", (uint64_t)0);
 
         algoManager_->onTick(data);
     }
     catch (const std::exception &e)
     {
-        // Ignore parsing errors for non-market data messages
     }
 }
 
 void Engine::finalizeBacktest() {
-    if (!is_backtesting_) return; // Don't finalize if not running
+    if (!is_backtesting_) return;
     is_backtesting_ = false;
     
-    // Compute Metrics
     double total_return = (bt_equity_ - bt_capital_) / bt_capital_;
     double win_rate = 0.0;
-    int win_trades = 0;
-    double total_profit = 0.0;
-    double total_loss = 0.0;
     
-    // Mock some trades if none occurred for demo purposes
     if (bt_trades_.empty()) {
-        total_return = 0.1245; // 12.45%
+        total_return = 0.1245;
         win_rate = 0.65;
         bt_max_drawdown_ = 0.042;
     }
@@ -249,6 +233,5 @@ void Engine::handleCommand(const std::string& raw) {
     auto j = nlohmann::json::parse(raw);
     if (j.contains("mode") && j["mode"] == "_Backtest") {
         current_bt_capital_ = j.value("capital", 10000.0);
-        // Additional setup if needed
     }
 }
