@@ -1,13 +1,15 @@
-# RSI Mean Reversion Strategy
-import time
+import blink
+import sys
 
-class RSIStrategy:
+class RSIStrategy(blink.Algo):
     def __init__(self, period=14, overbought=70, oversold=30):
+        super().__init__()
         self.period = period
         self.overbought = overbought
         self.oversold = oversold
         self.prices = []
-        print(f"RSI Strategy Initialized (Period: {period}, OB: {overbought}, OS: {oversold})")
+        print(f"[RSI] Initialized period {period}")
+        sys.stdout.flush()
 
     def calculate_rsi(self, prices):
         if len(prices) <= self.period:
@@ -33,13 +35,13 @@ class RSIStrategy:
         rs = avg_gain / avg_loss
         return 100 - (100 / (1 + rs))
 
-    def on_tick(self, price):
+    def on_tick(self, symbol, price, bid, ask, timestamp):
         self.prices.append(price)
         if len(self.prices) > self.period + 1:
             self.prices.pop(0)
             
         if len(self.prices) < self.period + 1:
-            return "WAITING"
+            return
             
         rsi = self.calculate_rsi(self.prices)
         
@@ -48,8 +50,3 @@ class RSIStrategy:
         elif rsi > self.overbought:
             return "SELL"
         return "HOLD"
-
-if __name__ == "__main__":
-    strategy = RSIStrategy()
-    # Simulated tick
-    print(f"Signal for $50000: {strategy.on_tick(50000)}")

@@ -9,8 +9,12 @@
 #include <functional>
 
 class Exchange1;
+class Exchange2;
 
-
+enum ExchangeType {
+    BINANCE,
+    JUPITER
+};
 
 
 
@@ -18,7 +22,7 @@ class Exchange1;
 
 class EAdapter {
 public:
-    EAdapter();
+    explicit EAdapter(ExchangeType type = ExchangeType::BINANCE);
     ~EAdapter();
 
     void connect_to_exchange();     
@@ -28,6 +32,9 @@ public:
     void stop();                    
     
     void set_symbols(const std::vector<std::string>& symbols);
+
+    void set_exchange(ExchangeType type);
+    ExchangeType get_exchange() const { return exchange_type_; }
 
 
     using ExternalCallback = std::function<void(
@@ -45,7 +52,16 @@ public:
 
     
 private:
-    std::unique_ptr<Exchange1> exchange_;
+    ExchangeType exchange_type_;
+    std::unique_ptr<Exchange1> exchange1_;
+    std::unique_ptr<Exchange2> exchange2_;
+
+    void _connect();
+    void _subscribe(const std::vector<std::string>& syms);
+    void _set_callback();
+
+
+
     std::vector<std::string> symbols_;
     std::atomic<bool> running_{false};
     std::thread worker_thread_;

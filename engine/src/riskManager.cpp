@@ -26,7 +26,6 @@ void RiskManager::connectExecutor() {
         connected_ = true;
         std::cout << "[RiskManager] ✓ Connected to Executor at " << host_ << ":" << port_ << std::endl;
         
-        // Start a thread to read acknowledgements and order results
         std::thread([this]() {
             try {
                 beast::flat_buffer buffer;
@@ -39,9 +38,9 @@ void RiskManager::connectExecutor() {
                         auto response = nlohmann::json::parse(msg);
                         if (response.contains("type")) {
                             if (response["type"] == "order_result") {
-                                // std::cout << "[RiskManager] Order Result - ID: " << response["order_id"] 
-                                //          << " | Status: " << response["status"] 
-                                //          << " | Strategy: " << response["strategy_id"] << std::endl;
+                                std::cout << "[RiskManager] Order Result - ID: " << response["order_id"] 
+                                         << " | Status: " << response["status"] 
+                                         << " | Strategy: " << response["strategy_id"] << std::endl;
                             } else {
                                 std::cout << "[RiskManager] Feedback: " << msg << std::endl;
                             }
@@ -63,13 +62,11 @@ void RiskManager::connectExecutor() {
 
 bool RiskManager::validateAndSend(const std::string& symbol, double price, int quantity, 
                                  const std::string& side, const std::string& strategy_id) {
-    // 1. Perform Risk Checks
     if (quantity <= 0) {
-        //std::cerr << "[RiskManager] Rejected: Invalid quantity " << quantity << std::endl;
+        std::cerr << "[RiskManager] Rejected: Invalid quantity " << quantity << std::endl;
         return false;
     }
     
-    // 2. Format Order with strategy tracking
     nlohmann::json order = {
         {"type", "order"},
         {"symbol", symbol},
@@ -83,12 +80,11 @@ bool RiskManager::validateAndSend(const std::string& symbol, double price, int q
             std::chrono::system_clock::now().time_since_epoch()).count()}
     };
     
-    // 3. Send to Executor
     if (connected_ && ws_->is_open()) {
         try {
             ws_->write(net::buffer(order.dump()));
-            // std::cout << "[RiskManager] ✓ Order sent [" << strategy_id << "]: " 
-            //           << symbol << " " << side << " " << quantity << " @ $" << price << std::endl;
+            std::cout << "[RiskManager] ✓ Order sent [" << strategy_id << "]: " 
+                      << symbol << " " << side << " " << quantity << " @ $" << price << std::endl;
             return true;
         } catch (const std::exception& e) {
             std::cerr << "[RiskManager] Send error: " << e.what() << std::endl;

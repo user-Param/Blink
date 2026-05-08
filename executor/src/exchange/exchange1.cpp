@@ -169,6 +169,7 @@ void BinanceExchange::sendOrder(const OrderRequest& order) {
           << "&type=" << order.type
           << "&quantity=" << order.quantity
           << "&timestamp=" << timestamp;
+          std::cout << "Order Sent" << std::endl;
     
     if (order.type == "LIMIT") {
         query << "&timeInForce=GTC"

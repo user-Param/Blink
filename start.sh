@@ -15,12 +15,12 @@ SHOW_RESEARCH=false
 # Parse arguments
 for arg in "$@"; do
     case $arg in
-        --engine)   SHOW_ENGINE=true; SHOW_ALL=false ;;
-        --executor) SHOW_EXECUTOR=true; SHOW_ALL=false ;;
-        --datafeed) SHOW_DATAFEED=true; SHOW_ALL=false ;;
-        --adapter)  SHOW_ADAPTER=true; SHOW_ALL=false ;;
-        --research) SHOW_RESEARCH=true; SHOW_ALL=false ;;
-        --all)      SHOW_ALL=true ;;
+        --engine)   SHOW_ENGINE=false; SHOW_ALL=false ;;
+        --executor) SHOW_EXECUTOR=false; SHOW_ALL=false ;;
+        --datafeed) SHOW_DATAFEED=false; SHOW_ALL=false ;;
+        --adapter)  SHOW_ADAPTER=false; SHOW_ALL=false ;;
+        --research) SHOW_RESEARCH=false; SHOW_ALL=false ;;
+        --all)      SHOW_ALL=false ;;
         *) echo "Unknown option: $arg"; exit 1 ;;
     esac
 done
