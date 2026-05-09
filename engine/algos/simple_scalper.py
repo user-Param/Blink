@@ -2,7 +2,7 @@ import blink
 import sys
 
 class SimpleScalper(blink.Algo):
-    def __init__(self, threshold=0.1):
+    def __init__(self, threshold=0.0001):
         super().__init__()
         self.threshold = threshold
         self.last_price = 0
@@ -10,6 +10,8 @@ class SimpleScalper(blink.Algo):
         sys.stdout.flush()
 
     def on_tick(self, symbol, price, bid, ask, timestamp):
+        # print(f"[Scalper] Tick received for {symbol} @ {price}") # Add this
+        # sys.stdout.flush()
         if self.last_price > 0:
             diff = price - self.last_price
             if diff < -self.threshold:

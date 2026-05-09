@@ -7,6 +7,8 @@
 #include <atomic>
 #include <thread>
 #include <functional>
+#include "exchange/exchange1.h"
+#include "exchange/exchange2.h"
 
 class Exchange1;
 class Exchange2;

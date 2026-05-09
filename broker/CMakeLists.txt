@@ -17,6 +17,7 @@ include_directories(include)
 add_library(broker STATIC
     src/adapter/eadapter.cpp
     src/exchange/exchange1.cpp
+    src/exchange/exchange2.cpp
 )
 
 # Create executable

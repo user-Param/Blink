@@ -3,7 +3,7 @@ import sys
 from collections import deque
 
 class SimpleMovingAverage(blink.Algo):
-    def __init__(self, short_period=5, long_period=20):
+    def __init__(self, short_period=5, long_period=2):
         super().__init__()
         self.short_period = short_period
         self.long_period = long_period

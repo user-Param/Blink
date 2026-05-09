@@ -46,7 +46,9 @@ class RSIStrategy(blink.Algo):
         rsi = self.calculate_rsi(self.prices)
         
         if rsi < self.oversold:
+            self.buy(symbol, price, 1)
             return "BUY"
         elif rsi > self.overbought:
+            self.sell(symbol, price, 1)
             return "SELL"
         return "HOLD"

@@ -8,7 +8,6 @@ namespace py = pybind11;
 AlgoManager::AlgoManager(std::shared_ptr<RiskManager> riskMgr)
     : riskManager_(std::move(riskMgr)) {
     python_guard_ = std::make_unique<py::scoped_interpreter>();
-    py::gil_scoped_release release;
 }
 
 AlgoManager::~AlgoManager() {
@@ -17,6 +16,7 @@ AlgoManager::~AlgoManager() {
 }
 
 void AlgoManager::addAlgo(std::unique_ptr<Algo> algo) {
+    std::lock_guard<std::mutex> lock(mutex_);
     algo->setManager(this);
     std::string strategy_id = "strategy_" + std::to_string(algos_.size());
     algos_.push_back({std::move(algo), strategy_id, true, "", {}});
@@ -24,6 +24,7 @@ void AlgoManager::addAlgo(std::unique_ptr<Algo> algo) {
 }
 
 void AlgoManager::activateAlgo(size_t index, bool active) {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (index < algos_.size()) {
         algos_[index].active = active;
         std::cout << "[AlgoManager] Strategy " << algos_[index].strategy_id 
@@ -32,12 +33,15 @@ void AlgoManager::activateAlgo(size_t index, bool active) {
 }
 
 void AlgoManager::onTick(const MarketData& data) {
-    static int check_counter = 0;
-    if (++check_counter >= 100) {
-        check_counter = 0;
-        loadStrategies(strategy_path_);
+    {
+        static int check_counter = 0;
+        if (++check_counter >= 100) {
+            check_counter = 0;
+            loadStrategies(strategy_path_);
+        }
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
     for (auto& instance : algos_) {
         if (instance.active) {
             try {
@@ -63,21 +67,31 @@ void AlgoManager::loadStrategies(const std::string& path) {
             auto last_mod = std::filesystem::last_write_time(entry.path());
             
             bool found = false;
-            for (auto& instance : algos_) {
-                if (instance.source_file == entry.path().string()) {
-                    if (instance.last_modified < last_mod) {
-                        std::cout << "[AlgoManager] Reloading modified strategy: " << entry.path().filename() << std::endl;
-                        loadPythonStrategy(entry.path());
-                        instance.last_modified = last_mod;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                for (auto& instance : algos_) {
+                    if (instance.source_file == entry.path().string()) {
+                        if (instance.last_modified < last_mod) {
+                            found = false; // Trigger reload
+                        } else {
+                            found = true;
+                        }
+                        break;
                     }
-                    found = true;
-                    break;
                 }
             }
 
             if (!found) {
-                std::cout << "[AlgoManager] Loading new strategy: " << entry.path().filename() << std::endl;
+                std::cout << "[AlgoManager] Loading/Reloading strategy: " << entry.path().filename() << std::endl;
                 loadPythonStrategy(entry.path());
+                // Update last_modified after loading
+                std::lock_guard<std::mutex> lock(mutex_);
+                for (auto& instance : algos_) {
+                    if (instance.source_file == entry.path().string()) {
+                        instance.last_modified = last_mod;
+                        break;
+                    }
+                }
             }
         }
     }
@@ -119,13 +133,13 @@ void AlgoManager::loadPythonStrategy(const std::filesystem::path& file) {
                         Algo* cpp_part = py_instance.cast<Algo*>();
                         if (cpp_part) {
                             cpp_part->setManager(this);
-                            std::cout << "[AlgoManager] Connected blink.Algo manager for " << module_name << std::endl;
                         }
                     } catch (...) {}
 
                     auto algo = std::make_unique<PythonAlgo>(py_instance);
                     algo->setManager(this);
                     
+                    std::lock_guard<std::mutex> lock(mutex_);
                     bool replaced = false;
                     for (auto& instance : algos_) {
                         if (instance.source_file == file.string()) {

@@ -6,7 +6,9 @@
 #include <string>
 #include <functional>
 #include <filesystem>
+#include <mutex>
 #include "algo.h"
+#include "marketData.h"
 #include "riskManager.h"
 
 namespace pybind11 { class scoped_interpreter; }
@@ -26,7 +28,10 @@ public:
     bool sendOrder(const std::string& symbol, double price, int quantity, 
                    const std::string& side, const std::string& strategy_id = "default");
 
-    size_t getAlgoCount() const { return algos_.size(); }
+    size_t getAlgoCount() const { 
+        std::lock_guard<std::mutex> lock(mutex_);
+        return algos_.size(); 
+    }
     void setOrderCallback(OrderCallback cb) { order_callback_ = std::move(cb); }
 
 private:
@@ -42,6 +47,7 @@ private:
     OrderCallback order_callback_;
     std::string strategy_path_ = "../algos";
     std::unique_ptr<pybind11::scoped_interpreter> python_guard_;
+    mutable std::mutex mutex_;
 
     void loadPythonStrategy(const std::filesystem::path& file);
 };

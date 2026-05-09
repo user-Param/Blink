@@ -4,57 +4,89 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <stdexcept>
+
 
 EAdapter::EAdapter(ExchangeType type) : exchange_type_(type) {
-    if (exchange_type_ == ExchangeType::BINANCE) {
-        exchange1_ = std::make_unique<Exchange1>();
-    } else {
-        exchange2_ = std::make_unique<Exchange2>();
-    }
+    set_exchange(type);
 }
 
 EAdapter::~EAdapter() {
     stop();
 }
 
+void EAdapter::set_exchange(ExchangeType type) {
+    exchange_type_ = type;
+ 
+    if (type == ExchangeType::BINANCE) {
+        exchange2_.reset();
+        exchange1_ = std::make_unique<Exchange1>();
+        std::cout << "[EAdapter] Exchange set to BINANCE" << std::endl;
+    } else {
+        exchange1_.reset();
+        exchange2_ = std::make_unique<Exchange2>();
+        std::cout << "[EAdapter] Exchange set to JUPITER" << std::endl;
+    }
+
+    if (running_) {
+        // Re-initialize if already running
+        on_update();
+        connect_to_exchange();
+        subscribe_symbols();
+    }
+}
+
 void EAdapter::set_symbols(const std::vector<std::string>& symbols) {
     symbols_ = symbols;
+    if (running_) {
+        subscribe_symbols();
+    }
+}
+
+void EAdapter::set_callback(ExternalCallback cb) {
+    external_cb_ = std::move(cb);
+    if (running_) {
+        on_update();
+    }
 }
 
 void EAdapter::connect_to_exchange() {
     if (exchange_type_ == ExchangeType::BINANCE) {
-        exchange1_->connect();
+        if (exchange1_) exchange1_->connect();
     } else {
-        exchange2_->connect();
+        if (exchange2_) exchange2_->connect();
     }
-    std::cout << "Connected to exchange" << std::endl;
+    std::cout << "[EAdapter] Connected to exchange" << std::endl;
 }
 
 void EAdapter::subscribe_symbols() {
     if (exchange_type_ == ExchangeType::BINANCE) {
-        exchange1_->subscribe(symbols_);
+        if (exchange1_) exchange1_->subscribe(symbols_);
     } else {
-        exchange2_->subscribe(symbols_);
+        if (exchange2_) exchange2_->subscribe(symbols_);
     }
-    std::cout << "Subscribed to " << symbols_.size() << " symbols" << std::endl;
+    std::cout << "[EAdapter] Subscribed to " << symbols_.size() << " symbols" << std::endl;
 }
 
 void EAdapter::on_update() {
-    auto callback = [this](const std::string& symbol, double price, double bid, double ask, long ts) {
-        if (external_cb_) {
-            external_cb_(symbol, price, bid, ask, ts);
-        }
+    auto cb = [this](const std::string& symbol, double price,
+                     double bid, double ask, long ts) {
+        if (external_cb_) external_cb_(symbol, price, bid, ask, ts);
     };
 
+    //std::cout << "Eadapter : " << cb << std::endl;
+ 
     if (exchange_type_ == ExchangeType::BINANCE) {
-        exchange1_->set_callback(callback);
+        if (exchange1_) exchange1_->set_callback(cb);
     } else {
-        exchange2_->set_callback(callback);
+        if (exchange2_) exchange2_->set_callback(cb);
     }
 }
 
 void EAdapter::run() {
-    std::cout << "EAdapter starting..." << std::endl;
+    std::cout << "[EAdapter] Starting ("
+              << (exchange_type_ == ExchangeType::BINANCE ? "BINANCE" : "JUPITER")
+              << ")..." << std::endl;
     
     // Setup callback for price updates
     on_update();
@@ -81,27 +113,7 @@ void EAdapter::stop() {
     std::cout << "EAdapter stopped" << std::endl;
 }
 
-
-void EAdapter::set_exchange(ExchangeType type) {
-    if (exchange_type_ == type) return;
-    
-    exchange_type_ = type;
-    if (exchange_type_ == ExchangeType::BINANCE) {
-        exchange2_.reset();
-        exchange1_ = std::make_unique<Exchange1>();
-    } else {
-        exchange1_.reset();
-        exchange2_ = std::make_unique<Exchange2>();
-    }
-    
-    if (running_) {
-        on_update();
-        connect_to_exchange();
-        subscribe_symbols();
-    }
-}
-
-
-void EAdapter::set_callback(ExternalCallback cb) {
-    external_cb_ = std::move(cb);
-}
+// Private helpers from header
+void EAdapter::_connect() { connect_to_exchange(); }
+void EAdapter::_subscribe(const std::vector<std::string>& syms) { symbols_ = syms; subscribe_symbols(); }
+void EAdapter::_set_callback() { on_update(); }
