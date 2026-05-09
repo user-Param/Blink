@@ -31,9 +31,9 @@ public:
     
     void onTick(const MarketData& md) override {
         // Your optimized C++ trading logic here
-        if (md.price > lastPrice_ * 1.00001) {
+        if (md.price > lastPrice_ * 1.01) {
             std::cout << "Price spike detected! Buy signal" << std::endl;
-        } else if (md.price < lastPrice_ * 0.00099) {
+        } else if (md.price < lastPrice_ * 0.99) {
             std::cout << "Price drop detected! Sell signal" << std::endl;
         }
         lastPrice_ = md.price;

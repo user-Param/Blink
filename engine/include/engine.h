@@ -61,6 +61,8 @@ private:
     double bt_max_equity_ = 10000.0;
     double bt_max_drawdown_ = 0.0;
     double last_bt_price_ = 0.0;
+    double bt_last_price_ = 0.0;   // tracks previous tick price for returns
+    int    bt_tick_count_ = 0;     // counts ticks in current backtest run
     std::vector<double> bt_returns_;
     struct BtTrade {
         std::string symbol;

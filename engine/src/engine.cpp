@@ -122,7 +122,6 @@ void Engine::onData(const std::string &raw)
             return;
         }
         if (j.contains("topic") && j["topic"].get<std::string>().find("backtest_") != std::string::npos) {
-            static int tick_count = 0;
             if (!is_backtesting_) {
                 is_backtesting_ = true;
                 bt_capital_ = current_bt_capital_;
@@ -131,7 +130,8 @@ void Engine::onData(const std::string &raw)
                 bt_max_drawdown_ = 0.0;
                 bt_trades_.clear();
                 bt_returns_.clear();
-                tick_count = 0;
+                bt_tick_count_ = 0;
+                bt_last_price_ = 0.0;
             }
             MarketData data;
             data.symbol = j["symbol"];
@@ -140,15 +140,10 @@ void Engine::onData(const std::string &raw)
             data.ask = j["ask"];
             data.timestamp = j["timestamp"];
             last_bt_price_ = data.price;
-            static double last_price = 0;
-            if (last_price > 0) bt_returns_.push_back((data.price - last_price) / last_price);
-            last_price = data.price;
+            if (bt_last_price_ > 0) bt_returns_.push_back((data.price - bt_last_price_) / bt_last_price_);
+            bt_last_price_ = data.price;
+            bt_tick_count_++;
             algoManager_->onTick(data);
-            if (++tick_count >= 100) {
-                tick_count = 0;
-                last_price = 0;
-                finalizeBacktest();
-            }
             return;
         }
         MarketData data;

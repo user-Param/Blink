@@ -20,15 +20,15 @@ const EXCHANGES: ExchangeOption[] = [
   {
     id: "BINANCE",
     label: "Binance",
-    color: "#F0B90B",
-    badgeBg: "bg-yellow-500/10 border-yellow-500/30 text-yellow-400",
+    color: "#00ff04",
+    badgeBg: "transparent",
     dotColor: "bg-yellow-400",
   },
   {
     id: "JUPITER",
     label: "Jupiter",
-    color: "#7C3AED",
-    badgeBg: "bg-violet-500/10 border-violet-500/30 text-violet-400",
+    color: "#ff0000",
+    badgeBg: "transparent",
     dotColor: "bg-violet-400",
   },
 ];
@@ -66,11 +66,11 @@ const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps)
   };
 
   return (
-    <div className="h-14 border border-white/30 flex items-center px-4 gap-8 bg-[#111] shrink-0">
+    <div className="h-14 flex items-center px-4 gap-8 bg-[#111] shrink-0 border border-white/30">
       <div className="flex items-center gap-3">
         <div className="flex -space-x-2">
-          <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-[10px] font-bold border border-black shadow-lg shadow-orange-500/20">B</div>
-          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold border border-black shadow-lg shadow-blue-500/20">T</div>
+          <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-[10px] font-bold  shadow-lg shadow-orange-500/20">B</div>
+          <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold  shadow-lg shadow-blue-500/20">T</div>
         </div>
         <span className="font-bold text-sm tracking-tight">BTC / USDT</span>
       </div>
@@ -114,7 +114,7 @@ const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps)
         {/* Trigger button */}
         <button
           onClick={() => setDropdownOpen((v) => !v)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[11px] font-bold
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border border-white/10 text-[11px] font-bold
                        transition-all duration-200 hover:brightness-110 select-none
                        ${selectedExchange.badgeBg}`}
         >
@@ -134,10 +134,10 @@ const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps)
         {/* Dropdown */}
         {dropdownOpen && (
           <div
-            className="absolute right-0 top-full mt-2 w-40 rounded-xl border border-white/10
-                        bg-[#111] shadow-2xl z-50 overflow-hidden"
+            className="absolute right-0 top-full mt-2 w-40 rounded-sm 
+                        bg-[#111] shadow-2xl z-50 overflow-hidden border border-white/30"
           >
-            <div className="px-3 py-2 border-b border-white/5">
+            <div className="px-3 py-2">
               <p className="text-[9px] uppercase tracking-widest text-white/30 font-bold">
                 Data Source
               </p>
