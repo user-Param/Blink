@@ -80,6 +80,11 @@ bool RiskManager::validateAndSend(const std::string& symbol, double price, int q
             std::chrono::system_clock::now().time_since_epoch()).count()}
     };
     
+    if (!connected_ || !ws_ || !ws_->is_open()) {
+        std::cerr << "[RiskManager] Not connected to Executor — retrying..." << std::endl;
+        connectExecutor();
+    }
+
     if (connected_ && ws_->is_open()) {
         try {
             ws_->write(net::buffer(order.dump()));

@@ -113,8 +113,7 @@ void OAdapter::run() {
 
     exchange_->connect();
     if (!exchange_->isConnected()) {
-        std::cerr << "[OAdapter] Failed to connect to exchange: " << exchange_id_ << std::endl;
-        return;
+        std::cerr << "[OAdapter] Warning: Failed to connect to exchange: " << exchange_id_ << " — starting server anyway." << std::endl;
     }
 
     running_ = true;

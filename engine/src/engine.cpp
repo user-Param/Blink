@@ -29,7 +29,6 @@ void Engine::start()
         initialTopics.push_back("backtest_ask_");
         initialTopics.push_back("backtest_complete");
     }
-    setTopics(initialTopics);
 
     algoManager_->setOrderCallback([this](const std::string& symbol, double price, int quantity, const std::string& side, const std::string& strategy_id) {
         if (is_backtesting_) {
@@ -43,6 +42,7 @@ void Engine::start()
     });
 
     connectDatafeed();
+    setTopics(initialTopics);
 
     running_ = true;
     readerThread_ = std::thread(&Engine::readLoop, this);

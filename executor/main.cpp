@@ -10,7 +10,7 @@ int main() {
         
         // Load environment configuration
         auto& config = Config::getInstance();
-        config.load(".env");
+        config.load("../.env");
         
         // Verify API keys are configured
         std::string api_key = config.get("BINANCE_API_KEY", "");
