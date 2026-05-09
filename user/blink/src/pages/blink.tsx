@@ -14,7 +14,7 @@ const Blink = () => {
     return(
         <div className="min-h-screen bg-[#181818]">
             <div className="text-white/50 sticky top-0 bg-[#181818] z-50">
-                <Navbar setActivePage={setActivePage} activePage={activePage}/>
+                <Navbar/>
             </div>
             <div>
   <Routes>

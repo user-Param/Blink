@@ -34,26 +34,7 @@ const Home = ({ setActivePage }: HomeProps) => {
 
 
 
-  const features = [
-    {
-      icon: <Zap className="text-yellow-400" size={24} />,
-      title: "Ultra-Low Latency",
-      description:
-        "Execute trades in microseconds with our high-performance C++ core engine.",
-    },
-    {
-      icon: <Shield className="text-blue-400" size={24} />,
-      title: "Institutional Security",
-      description:
-        "Military-grade encryption and multi-sig cold storage for all digital assets.",
-    },
-    {
-      icon: <BarChart3 className="text-[#FF6D1F]" size={24} />,
-      title: "Advanced Analytics",
-      description:
-        "Powerful backtesting suite with millisecond-precision historical data.",
-    },
-  ];
+  
 
   return (
     <div className="min-h-screen text-white overflow-x-hidden relative">
