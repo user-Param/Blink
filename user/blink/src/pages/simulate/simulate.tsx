@@ -129,33 +129,14 @@ const Simulate = () => {
             } 
             // Fallback case: stream completed but no results yet
             else if (msg.topic === "backtest_complete") {
-                // If we're still running after a small delay, force stop loading
+                // Give the engine up to 3 seconds to send backtest_result.
+                // If nothing arrives, stop the loading spinner without fake data.
                 setTimeout(() => {
                     setIsBacktestRunning(prev => {
-                        if (prev) {
-                            // Mock results to ensure UI update
-                            setBacktestResults({
-                                totalReturn: "12.45%",
-                                totalPnL: "$1245.00",
-                                maxDrawdown: "4.2%",
-                                sharpeRatio: "1.92",
-                                winRate: "65.0%",
-                                profitFactor: "1.75",
-                                totalTrades: "48",
-                                winningTrades: "31",
-                                losingTrades: "17",
-                                avgWin: "$450.00",
-                                avgLoss: "$210.00",
-                                maxProfit: "$1200.00",
-                                maxLoss: "$540.00",
-                                totalFees: "$85.00",
-                                finalEquity: "$11245.00"
-                            });
-                            return false;
-                        }
+                        if (prev) return false;
                         return prev;
                     });
-                }, 1000);
+                }, 3000);
             }
         } catch {
             // Error parsing or not our message

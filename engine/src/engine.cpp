@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cmath>
 #include <algorithm>
+#include <numeric>
 
 Engine::Engine(std::shared_ptr<AlgoManager> algoMgr)
     : algoManager_(std::move(algoMgr)), ws_{ioc_} {}
@@ -30,6 +31,17 @@ void Engine::start()
     }
     setTopics(initialTopics);
 
+    algoManager_->setOrderCallback([this](const std::string& symbol, double price, int quantity, const std::string& side, const std::string& strategy_id) {
+        if (is_backtesting_) {
+            bt_trades_.push_back({symbol, side, price, quantity, (long)std::time(nullptr)});
+            if (side == "BUY") bt_equity_ -= (price * quantity);
+            else bt_equity_ += (price * quantity);
+            if (bt_equity_ > bt_max_equity_) bt_max_equity_ = bt_equity_;
+            double dd = (bt_max_equity_ - bt_equity_) / bt_max_equity_;
+            if (dd > bt_max_drawdown_) bt_max_drawdown_ = dd;
+        }
+    });
+
     connectDatafeed();
 
     running_ = true;
@@ -53,7 +65,6 @@ void Engine::setTopics(const std::vector<std::string> &topics)
         nlohmann::json subMsg;
         subMsg["subscribe"] = topics_;
         ws_.write(net::buffer(subMsg.dump()));
-        std::cout << "[Engine] Updated subscriptions: " << subMsg.dump() << std::endl;
     }
 }
 
@@ -64,16 +75,7 @@ void Engine::connectDatafeed()
         tcp::resolver resolver(ioc_);
         auto const results = resolver.resolve(host_, port_);
         net::connect(ws_.next_layer(), results.begin(), results.end());
-
         ws_.handshake(host_ + ":" + port_, "/");
-        std::cout << "Engine connected to datafeed server at " << host_ << ":" << port_ << std::endl;
-
-        if (!topics_.empty()) {
-            nlohmann::json subMsg;
-            subMsg["subscribe"] = topics_;
-            ws_.write(net::buffer(subMsg.dump()));
-            std::cout << "[Engine] Subscribed to: " << subMsg.dump() << std::endl;
-        }
     }
     catch (const std::exception &e)
     {
@@ -87,7 +89,6 @@ void Engine::disconnectDatafeed()
     if (ws_.is_open())
     {
         ws_.close(websocket::close_code::normal);
-        std::cout << "Engine disconnected from datafeed." << std::endl;
     }
 }
 
@@ -101,16 +102,10 @@ void Engine::readLoop()
             ws_.read(buffer);
             std::string msg = beast::buffers_to_string(buffer.data());
             buffer.consume(buffer.size());
-
-            std::cout << "[Engine][RAW] " << msg << std::endl;
             onData(msg);
         }
         catch (const std::exception &e)
         {
-            if (running_)
-            {
-                std::cerr << "Engine read error: " << e.what() << std::endl;
-            }
             break;
         }
     }
@@ -121,43 +116,34 @@ void Engine::onData(const std::string &raw)
     try
     {
         auto j = nlohmann::json::parse(raw);
-
         if (j.contains("type") && j["type"] == "backtest_result") return;
-
         if (j.contains("topic") && j["topic"] == "backtest_complete") {
             finalizeBacktest();
             return;
         }
-
         if (j.contains("topic") && j["topic"].get<std::string>().find("backtest_") != std::string::npos) {
             static int tick_count = 0;
             if (!is_backtesting_) {
                 is_backtesting_ = true;
                 bt_capital_ = current_bt_capital_;
                 bt_equity_ = bt_capital_;
-                bt_trades_.clear();
-                bt_returns_.clear();
                 bt_max_equity_ = bt_capital_;
                 bt_max_drawdown_ = 0.0;
+                bt_trades_.clear();
+                bt_returns_.clear();
                 tick_count = 0;
-                std::cout << "[Engine] Backtest started with capital: " << bt_capital_ << std::endl;
             }
-
             MarketData data;
             data.symbol = j["symbol"];
             data.price = j["price"];
             data.bid = j["bid"];
             data.ask = j["ask"];
             data.timestamp = j["timestamp"];
-
+            last_bt_price_ = data.price;
             static double last_price = 0;
-            if (last_price > 0) {
-                bt_returns_.push_back((data.price - last_price) / last_price);
-            }
+            if (last_price > 0) bt_returns_.push_back((data.price - last_price) / last_price);
             last_price = data.price;
-
             algoManager_->onTick(data);
-            
             if (++tick_count >= 100) {
                 tick_count = 0;
                 last_price = 0;
@@ -165,73 +151,81 @@ void Engine::onData(const std::string &raw)
             }
             return;
         }
-
         MarketData data;
         data.symbol = j["symbol"];
         data.price = j["price"];
         data.bid = j.value("bid", data.price - 0.01);
         data.ask = j.value("ask", data.price + 0.01);
         data.timestamp = j.value("timestamp", (uint64_t)0);
-
         algoManager_->onTick(data);
     }
-    catch (const std::exception &e)
-    {
-    }
+    catch (...) {}
 }
 
 void Engine::finalizeBacktest() {
     if (!is_backtesting_) return;
     is_backtesting_ = false;
-    
-    double total_return = (bt_equity_ - bt_capital_) / bt_capital_;
-    double win_rate = 0.0;
-    
-    if (bt_trades_.empty()) {
-        total_return = 0.1245;
-        win_rate = 0.65;
-        bt_max_drawdown_ = 0.042;
+    double final_pos = 0;
+    for (const auto& t : bt_trades_) final_pos += (t.side == "BUY" ? t.quantity : -t.quantity);
+    double final_equity = bt_equity_ + (final_pos * last_bt_price_);
+    double total_pnl = final_equity - bt_capital_;
+    double total_return = (bt_capital_ > 0) ? (total_pnl / bt_capital_) * 100.0 : 0;
+
+    int winning_trades = 0, losing_trades = 0;
+    double total_wins = 0, total_losses = 0, max_win = 0, max_loss = 0;
+    // Simple trade matching (FIFO style approximation for win/loss)
+    if(bt_trades_.size() >= 2) {
+        for(size_t i=0; i<bt_trades_.size(); i+=2) {
+            if(i+1 < bt_trades_.size()) {
+                double pnl = (bt_trades_[i].side == "BUY") ? (bt_trades_[i+1].price - bt_trades_[i].price) : (bt_trades_[i].price - bt_trades_[i+1].price);
+                if(pnl > 0) { winning_trades++; total_wins += pnl; if(pnl > max_win) max_win = pnl; }
+                else { losing_trades++; total_losses += std::abs(pnl); if(std::abs(pnl) > max_loss) max_loss = std::abs(pnl); }
+            }
+        }
+    }
+
+    double win_rate = (winning_trades + losing_trades > 0) ? (double)winning_trades / (winning_trades + losing_trades) * 100.0 : 0;
+    double profit_factor = (total_losses > 0) ? total_wins / total_losses : 1.0;
+    double avg_win = (winning_trades > 0) ? total_wins / winning_trades : 0;
+    double avg_loss = (losing_trades > 0) ? total_losses / losing_trades : 0;
+
+    double sharpe = 0;
+    if(!bt_returns_.empty()) {
+        double sum = std::accumulate(bt_returns_.begin(), bt_returns_.end(), 0.0);
+        double mean = sum / bt_returns_.size();
+        double sq_sum = std::inner_product(bt_returns_.begin(), bt_returns_.end(), bt_returns_.begin(), 0.0);
+        double stdev = std::sqrt(sq_sum / bt_returns_.size() - mean * mean);
+        if(stdev > 0) sharpe = (mean / stdev) * std::sqrt(252 * 24 * 60); // Annualized approximation
     }
 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2);
-    
-    nlohmann::json results;
-    results["totalReturn"] = std::to_string(total_return * 100).substr(0, 5) + "%";
-    results["totalPnL"] = "$" + std::to_string(bt_equity_ - bt_capital_);
-    results["maxDrawdown"] = std::to_string(bt_max_drawdown_ * 100).substr(0, 4) + "%";
-    results["sharpeRatio"] = "1.92";
-    results["winRate"] = "65.0%";
-    results["profitFactor"] = "1.75";
-    results["totalTrades"] = "48";
-    results["winningTrades"] = "31";
-    results["losingTrades"] = "17";
-    results["avgWin"] = "$450.00";
-    results["avgLoss"] = "$210.00";
-    results["maxProfit"] = "$1200.00";
-    results["maxLoss"] = "$540.00";
-    results["totalFees"] = "$85.00";
-    results["finalEquity"] = "$" + std::to_string(bt_equity_);
+    nlohmann::json res;
+    res["totalReturn"] = std::to_string(total_return).substr(0, 5) + "%";
+    res["totalPnL"] = "$" + std::to_string(total_pnl);
+    res["maxDrawdown"] = std::to_string(bt_max_drawdown_ * 100.0).substr(0, 5) + "%";
+    res["sharpeRatio"] = std::to_string(sharpe).substr(0, 4);
+    res["winRate"] = std::to_string(win_rate).substr(0, 4) + "%";
+    res["profitFactor"] = std::to_string(profit_factor).substr(0, 4);
+    res["totalTrades"] = std::to_string(bt_trades_.size());
+    res["winningTrades"] = std::to_string(winning_trades);
+    res["losingTrades"] = std::to_string(losing_trades);
+    res["avgWin"] = "$" + std::to_string(avg_win);
+    res["avgLoss"] = "$" + std::to_string(avg_loss);
+    res["maxProfit"] = "$" + std::to_string(max_win);
+    res["maxLoss"] = "$" + std::to_string(max_loss);
+    res["totalFees"] = "$0.00";
+    res["finalEquity"] = "$" + std::to_string(final_equity);
 
-    nlohmann::json msg;
-    msg["type"] = "backtest_result";
-    msg["results"] = results;
-    
+    nlohmann::json msg; msg["type"] = "backtest_result"; msg["results"] = res;
     ws_.write(net::buffer(msg.dump()));
-    std::cout << "[Engine] Backtest finalized and results sent." << std::endl;
 }
 
-void Engine::sendMode(const std::string &mode)
-{
-    nlohmann::json msg;
-    msg["mode"] = mode;
-    ws_.write(net::buffer(msg.dump()));
-    std::cout << "Engine sent mode: " << mode << std::endl;
+void Engine::sendMode(const std::string &mode) {
+    nlohmann::json msg; msg["mode"] = mode; ws_.write(net::buffer(msg.dump()));
 }
 
 void Engine::handleCommand(const std::string& raw) {
     auto j = nlohmann::json::parse(raw);
-    if (j.contains("mode") && j["mode"] == "_Backtest") {
-        current_bt_capital_ = j.value("capital", 10000.0);
-    }
+    if (j.contains("mode") && j["mode"] == "_Backtest") current_bt_capital_ = j.value("capital", 10000.0);
 }

@@ -119,8 +119,8 @@ const TradePositions = () => {
               isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
             }`}
           ></div>
-          <span className="text-[8px] text-white/40">
-            {isConnected ? "Connected" : "Disconnected"}
+          <span className="text-[8px] text-white/40 font-black uppercase">
+            Total Orders: {orders.length}
           </span>
         </div>
       </div>
@@ -380,7 +380,7 @@ const TradePositions = () => {
                           FILLED
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-white/40 text-[9px]">
+                      <td className="px-4 py-3 text-white/40 text-[15px]">
                         {new Date(order.timestamp).toLocaleTimeString()}
                       </td>
                     </tr>

@@ -60,6 +60,7 @@ private:
     double bt_equity_ = 10000.0;
     double bt_max_equity_ = 10000.0;
     double bt_max_drawdown_ = 0.0;
+    double last_bt_price_ = 0.0;
     std::vector<double> bt_returns_;
     struct BtTrade {
         std::string symbol;

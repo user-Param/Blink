@@ -122,15 +122,15 @@ void Dadapter::stream_db_data() {
         if (R.empty()) {
             std::cout << "[Dadapter] Database is empty, sending mock data for demo..." << std::endl;
             // Generate 100 mock ticks so Engine can finalize backtest
-            for (int i = 0; i < 100; ++i) {
+            for (int i = 0; i < 1000; ++i) {
                 if (!streaming_) break;
                 nlohmann::json data = {
                     {"topic", "backtest_price_"},
                     {"timestamp", std::to_string(1714500000 + i)},
                     {"symbol", "BTCUSDT"},
                     {"price", 60000.0 + (rand() % 100)},
-                    {"bid", 59990.0},
-                    {"ask", 60010.0}
+                    {"bid", 59990.0 + (rand() % 100)},
+                    {"ask", 60010.0 + (rand() % 100)}
                 };
                 std::string msg = data.dump();
                 {
