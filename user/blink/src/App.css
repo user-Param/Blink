@@ -5,3 +5,13 @@ body {
   font-weight: 200;            /* default weight, adjust as needed */
   font-style: normal;
 }
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

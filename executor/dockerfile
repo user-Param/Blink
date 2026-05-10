@@ -1,0 +1,12 @@
+FROM gcc:12 AS build
+RUN apt-get update && apt-get install -y cmake libboost-all-dev
+WORKDIR /app
+COPY . .
+RUN mkdir -p build && cd build && cmake .. && make
+
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y libboost-all-dev && rm -rf /var/lib/apt/lists/*
+COPY --from=build /app/build/executor /app/executor
+WORKDIR /app
+EXPOSE 8080   
+CMD ["./executor"]

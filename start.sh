@@ -21,6 +21,8 @@ for arg in "$@"; do
         --adapter)  SHOW_ADAPTER=false; SHOW_ALL=false ;;
         --research) SHOW_RESEARCH=false; SHOW_ALL=false ;;
         --all)      SHOW_ALL=false ;;
+        --none)      SHOW_ENGINE=false; SHOW_EXECUTOR=false; 
+        SHOW_DATAFEED=false; SHOW_ADAPTER=false; SHOW_RESEARCH=false; SHOW_ALL=false ;;
         *) echo "Unknown option: $arg"; exit 1 ;;
     esac
 done
