@@ -1,60 +1,37 @@
-# ===== Build stage =====
-FROM gcc:12 AS build
-
-# Install only the Boost components that are commonly used
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Build stage
+FROM ubuntu:22.04 AS build
+RUN apt-get update && apt-get install -y \
     cmake \
+    g++ \
+    libboost-all-dev \
+    libssl-dev \
     python3-dev \
-    # Boost libraries (avoid all-dev → no gfortran / MPI)
-    libboost-system-dev \
-    libboost-thread-dev \
-    libboost-filesystem-dev \
-    libboost-program-options-dev \
-    libboost-regex-dev \
-    libboost-python-dev \
+    pybind11-dev \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY . .
+# Remove the hardcoded pybind11 path from CMakeLists.txt for the container build
+RUN sed -i '/list(APPEND CMAKE_PREFIX_PATH "\/Users\/param\/Documents\/BLINK\/.venv/d' CMakeLists.txt
+# Clear any host build artifacts to prevent CMake cache mismatch
+RUN rm -rf build && mkdir -p build && cd build && cmake .. && make
+
+# Runtime stage
+FROM ubuntu:22.04
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    libboost-thread1.74.0 \
+    libssl3 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY . .
-RUN mkdir -p build && cd build && cmake .. && make
-
-# ===== Runtime stage =====
-FROM python:3.11-slim
-
-# Install only essential system libraries (no broken GL packages)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    libopenblas-dev \
-    liblapack-dev \
-    libjpeg62-turbo-dev \
-    libpng-dev \
-    libtiff-dev \
-    libwebp-dev \
-    libopenjp2-7-dev \
-    libgl1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgomp1 \
-    wget \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install ta-lib C library (required for the ta-lib Python package)
-RUN wget http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz -O /tmp/ta-lib.tar.gz && \
-    cd /tmp && tar -xzf ta-lib.tar.gz && \
-    cd ta-lib && ./configure --prefix=/usr && make && make install && \
-    rm -rf /tmp/ta-lib*
-
-# Copy requirements and install Python packages
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Copy the compiled engine binary and Python application files
 COPY --from=build /app/build/engine /app/engine
 COPY --from=build /app/algos /app/algos
 COPY --from=build /app/include /app/include
-COPY --from=build /app/main.py /app/main.py
 
-WORKDIR /app
-CMD ["python3", "main.py"]
+CMD ["./engine"]

@@ -1,12 +1,26 @@
-FROM gcc:12 AS build
-RUN apt-get update && apt-get install -y cmake libboost-all-dev
+# Build stage
+FROM ubuntu:22.04 AS build
+RUN apt-get update && apt-get install -y \
+    cmake \
+    g++ \
+    libboost-all-dev \
+    libssl-dev \
+    libcurl4-openssl-dev \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY . .
-RUN mkdir -p build && cd build && cmake .. && make
+# Clear any host build artifacts to prevent CMake cache mismatch
+RUN rm -rf build && mkdir -p build && cd build && cmake .. && make
 
+# Runtime stage
 FROM ubuntu:22.04
-RUN apt-get update && apt-get install -y libboost-all-dev && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/build/executor /app/executor
+RUN apt-get update && apt-get install -y \
+    libboost-thread1.74.0 \
+    libssl3 \
+    libcurl4 \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-EXPOSE 8080   
+COPY --from=build /app/build/executor /app/executor
+EXPOSE 8080
 CMD ["./executor"]

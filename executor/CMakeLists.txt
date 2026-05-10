@@ -3,7 +3,9 @@ project(executor)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-cmake_policy(SET CMP0167 OLD)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 
 list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
 

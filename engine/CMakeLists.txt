@@ -2,13 +2,20 @@ cmake_minimum_required(VERSION 3.10)
 project(engine)
 
 set(CMAKE_CXX_STANDARD 17)
-cmake_policy(SET CMP0167 OLD)
+if(POLICY CMP0167)
+    cmake_policy(SET CMP0167 NEW)
+endif()
 
 list(APPEND CMAKE_PREFIX_PATH /opt/homebrew)
 # Add pybind11 installed via pip to the prefix path
 list(APPEND CMAKE_PREFIX_PATH "/Users/param/Documents/BLINK/.venv/lib/python3.14/site-packages/pybind11/share/cmake/pybind11")
 
-find_package(Boost 1.90.0 REQUIRED COMPONENTS thread)
+find_package(Boost 1.74 REQUIRED COMPONENTS
+    thread
+    chrono
+    date_time
+    atomic
+)
 find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(nlohmann_json REQUIRED)

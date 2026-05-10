@@ -1,18 +1,50 @@
 version: '3'
 services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: blink
+      POSTGRES_USER: blink
+      POSTGRES_PASSWORD: blink_password
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+
+  datafeed:
+    build:
+      context: .
+      dockerfile: datafeed/dockerfile
+    ports:
+      - "9000:9000"
+    depends_on:
+      - db
+
   broker:
     build: ./broker
-    ports: ["8080:8080"]
+    ports:
+      - "8080:8080"
     volumes:
       - ./database:/app/database
+
   engine:
     build: ./engine
-    volumes: ["./engine/algos:/app/algos"]
+    volumes:
+      - ./engine/algos:/app/algos
+    depends_on:
+      - datafeed
+      - executor
+
   executor:
     build: ./executor
-  db:
-    image: keinos/sqlite3
-    volumes: ["./database:/db"]
+    ports:
+      - "9001:9001"
+
   frontend:
     build: ./user/blink
-    ports: ["80:80"]
+    ports:
+      - "80:80"
+    depends_on:
+      - datafeed
+
+volumes:
+  postgres_data:
