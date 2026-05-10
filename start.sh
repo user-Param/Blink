@@ -31,6 +31,7 @@ echo "Cleaning up old processes..."
 lsof -ti:9000 | xargs kill -9 2>/dev/null || true
 lsof -ti:9001 | xargs kill -9 2>/dev/null || true
 lsof -ti:5001 | xargs kill -9 2>/dev/null || true
+lsof -ti:5173 | xargs kill -9 2>/dev/null || true
 sleep 1
 
 echo "Building and starting BLINK Ecosystem"
@@ -83,6 +84,11 @@ RESEARCH_PID=$!
 # 6. Frontend
 echo "Starting React frontend..."
 cd "$PROJECT_ROOT/user/blink"
+# Ensure dependencies are installed
+if [ ! -d "node_modules" ]; then
+    echo "Installing frontend dependencies..."
+    npm install --quiet
+fi
 npm run dev > "$LOG_DIR/frontend.log" 2>&1 &
 REACT_PID=$!
 
