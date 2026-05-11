@@ -25,7 +25,7 @@ const SimulateCard = ({
   return (
     <div 
       onClick={onClick}
-      className={`relative h-full w-full rounded-2xl p-5 shadow-sm cursor-pointer transition-all duration-200 border-2 ${
+      className={`relative h-full w-full rounded-sm p-5 shadow-sm cursor-pointer transition-all duration-200 border-2 ${
         isSelected 
           ? "bg-[#2a2a2a] border-[#FF6D1F] scale-[1.02]" 
           : "bg-[#202020] border-transparent hover:border-white/10"

@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Plus, X, Upload, Play, Database, FileText, Activity, TrendingUp, TrendingDown, BarChart3, Download } from "lucide-react";
 import SimulateCard from "./simulate-card";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import "./simulation-results";
+
 
 type Dataset = {
     id: string;
@@ -121,7 +123,7 @@ const Simulate = () => {
 
         try {
             const msg = JSON.parse(lastMessage);
-            console.log("Parsed:", msg);
+            // console.log("Parsed:", msg);
             if (msg.type === "backtest_result") {
                 setBacktestResults(msg.results);
                 setIsBacktestRunning(false);
@@ -240,7 +242,7 @@ const Simulate = () => {
     return (
         <div className="h-full flex flex-col">
             {/* Control Bar */}
-            <div className="border-b border-white/10 p-4 flex items-center justify-between bg-[#111]">
+            <div className="border-b border-white/10 p-4 flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <div className="flex items-center gap-2">
                         <Database size={18} className="text-[#FF6D1F]" />
@@ -275,7 +277,7 @@ const Simulate = () => {
                             step="1000"
                             value={initialCapital}
                             onChange={(e) => setInitialCapital(parseFloat(e.target.value) || 0)}
-                            className="w-28 bg-[#1e1e1e] border border-white/10 text-white text-xs rounded px-3 py-1.5 focus:outline-none focus:border-[#FF6D1F]"
+                            className="w-28 bg-[#1e1e1e] border border-white/10 text-white text-xs px-3 py-1.5 focus:outline-none focus:border-[#FF6D1F]"
                         />
                     </div>
                 </div>
@@ -288,7 +290,7 @@ const Simulate = () => {
 
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 rounded-lg text-sm transition-colors"
+                        className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white border border-white/10 px-4 py-2 text-sm transition-colors"
                     >
                         <Plus size={16} /> Add Dataset
                     </button>
@@ -296,7 +298,7 @@ const Simulate = () => {
                     <button
                         onClick={startBacktest}
                         disabled={!selectedDatasetId || !selectedStrategyId}
-                        className={`flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                        className={`flex items-center gap-2 px-6 py-2 text-sm font-semibold transition-all ${
                             selectedDatasetId && selectedStrategyId
                                 ? "bg-[#FF6D1F] hover:bg-[#e55d1a] text-white shadow-lg shadow-[#FF6D1F]/20"
                                 : "bg-white/5 text-white/20 cursor-not-allowed border border-white/5"
@@ -347,7 +349,7 @@ const Simulate = () => {
             {/* Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-[#1a1a1a] border border-white/10 w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between p-6 border-b border-white/5">
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                 <FileText size={20} className="text-[#FF6D1F]" />
@@ -368,7 +370,7 @@ const Simulate = () => {
                                     required
                                     type="text"
                                     placeholder="e.g. BTC-USDT 2024 Spring"
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors"
+                                    className="w-full bg-white/5 border border-white/10  px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors"
                                     value={formData.title}
                                     onChange={e => setFormData({...formData, title: e.target.value})}
                                 />
@@ -379,7 +381,7 @@ const Simulate = () => {
                                 <textarea
                                     required
                                     placeholder="Brief details about the data..."
-                                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors h-24 resize-none"
+                                    className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors h-24 resize-none"
                                     value={formData.description}
                                     onChange={e => setFormData({...formData, description: e.target.value})}
                                 />
@@ -392,7 +394,7 @@ const Simulate = () => {
                                         required
                                         type="text"
                                         placeholder="BTC/USDT"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors"
+                                        className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors"
                                         value={formData.instrument}
                                         onChange={e => setFormData({...formData, instrument: e.target.value})}
                                     />
@@ -403,7 +405,7 @@ const Simulate = () => {
                                         required
                                         type="text"
                                         placeholder="Jan-Dec 2023"
-                                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors"
+                                        className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-[#FF6D1F] transition-colors"
                                         value={formData.timeframe}
                                         onChange={e => setFormData({...formData, timeframe: e.target.value})}
                                     />
@@ -419,7 +421,7 @@ const Simulate = () => {
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         onChange={e => setFormData({...formData, file: e.target.files ? e.target.files[0] : null})}
                                     />
-                                    <div className="bg-white/5 border-2 border-dashed border-white/10 rounded-xl p-6 flex flex-col items-center justify-center gap-2 group-hover:border-[#FF6D1F]/50 group-hover:bg-[#FF6D1F]/5 transition-all">
+                                    <div className="bg-white/5 border-2 border-dashed border-white/10 p-6 flex flex-col items-center justify-center gap-2 group-hover:border-[#FF6D1F]/50 group-hover:bg-[#FF6D1F]/5 transition-all">
                                         <Upload size={24} className="text-white/20 group-hover:text-[#FF6D1F]" />
                                         <span className="text-sm text-white/40 group-hover:text-white/60">
                                             {formData.file ? formData.file.name : "Choose CSV file"}
@@ -430,7 +432,7 @@ const Simulate = () => {
 
                             <button
                                 type="submit"
-                                className="w-full bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold py-4 rounded-xl mt-4 shadow-lg shadow-[#FF6D1F]/20 transition-all active:scale-[0.98]"
+                                className="w-full bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-bold py-4 mt-4 shadow-lg shadow-[#FF6D1F]/20 transition-all active:scale-[0.98]"
                             >
                                 Add Dataset
                             </button>
@@ -442,7 +444,7 @@ const Simulate = () => {
             {/* Backtest Overlay */}
             {showBacktestOverlay && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-[70%] max-w-4xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-[#1a1a1a] border border-white/10  w-[70%] max-w-4xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex items-center justify-between p-6 border-b border-white/5">
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
                                 <Activity size={20} className="text-[#FF6D1F]" />
@@ -469,11 +471,11 @@ const Simulate = () => {
                                 </div>
                                 
                                 <div className="grid grid-cols-2 gap-6 pt-6">
-                                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                    <div className="bg-white/5 p-4  border border-white/5">
                                         <p className="text-white/30 text-[10px] uppercase font-bold mb-1 tracking-wider">Strategy</p>
                                         <p className="text-white font-medium">{strategies.find(s => s.id === selectedStrategyId)?.name || "Unknown"}</p>
                                     </div>
-                                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                                    <div className="bg-white/5 p-4  border border-white/5">
                                         <p className="text-white/30 text-[10px] uppercase font-bold mb-1 tracking-wider">Dataset</p>
                                         <p className="text-white font-medium">{datasets.find(d => d.id === selectedDatasetId)?.title || "Unknown"}</p>
                                     </div>
@@ -500,7 +502,7 @@ const Simulate = () => {
                                         { label: "Total Fees", value: backtestResults.totalFees },
                                         { label: "Final Equity", value: backtestResults.finalEquity, color: "text-[#FF6D1F]" }
                                     ].map((m, idx) => (
-                                        <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                                        <div key={idx} className="bg-white/5 p-4 border border-white/5 hover:border-white/10 transition-colors">
                                             <div className="flex items-center gap-2 mb-2">
                                                 {m.icon && <m.icon size={12} className="text-[#FF6D1F]/60" />}
                                                 <p className="text-white/30 text-[10px] uppercase font-bold tracking-wider">{m.label}</p>
@@ -516,14 +518,14 @@ const Simulate = () => {
                             {backtestResults && (
                                 <button
                                     onClick={downloadBacktestResults}
-                                    className="bg-[#FF6D1F] hover:bg-[#e55d1a] text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-all mr-3 flex items-center gap-2"
+                                    className="bg-[#FF6D1F] hover:bg-[#e55d1a] text-white px-8 py-2.5 text-sm font-semibold transition-all mr-3 flex items-center gap-2"
                                 >
                                     <Download size={16} /> Download Results
                                 </button>
                             )}
                             <button
                                 onClick={() => { setShowBacktestOverlay(false); setBacktestResults(null); }}
-                                className="bg-white/5 hover:bg-white/10 text-white px-8 py-2.5 rounded-xl text-sm font-semibold transition-colors border border-white/10"
+                                className="bg-white/5 hover:bg-white/10 text-white px-8 py-2.5 text-sm font-semibold transition-colors border border-white/10"
                             >
                                 Close
                             </button>
