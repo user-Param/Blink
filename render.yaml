@@ -12,8 +12,6 @@ services:
     dockerfilePath: datafeed/dockerfile
     dockerContext: .
     plan: free
-    env:
-      PORT: "9000"
 
   - type: pserv
     name: blink-broker
@@ -21,7 +19,6 @@ services:
     dockerfilePath: broker/dockerfile
     dockerContext: .
     plan: starter
-    port: 8080
 
   - type: pserv
     name: blink-executor
@@ -29,7 +26,6 @@ services:
     dockerfilePath: executor/dockerfile
     dockerContext: .
     plan: starter
-    port: 9001
 
   - type: web
     name: blink-engine
