@@ -13,19 +13,19 @@ services:
     dockerContext: .
     plan: free
 
-  - type: pserv
+  - type: web
     name: blink-broker
     runtime: docker
     dockerfilePath: broker/dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
 
-  - type: pserv
+  - type: web
     name: blink-executor
     runtime: docker
     dockerfilePath: executor/dockerfile
     dockerContext: .
-    plan: starter
+    plan: free
 
 
   - type: web
