@@ -25,6 +25,170 @@ type Strategy = {
 const BACKEND_URL =
     (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
 
+
+export const calculateSimulationResults = ({
+  candles,
+  strategy,
+  capital = 10000,
+}: {
+  candles: any[];
+  strategy: string;
+  capital?: number;
+}) => {
+  if (!candles || candles.length < 2) return null;
+
+  let balance = capital;
+  let peakBalance = capital;
+
+  let trades = 0;
+  let wins = 0;
+  let losses = 0;
+
+  let maxDrawdown = 0;
+
+  let totalProfit = 0;
+  let totalLoss = 0;
+
+  let position: null | {
+    entry: number;
+    side: "LONG" | "SHORT";
+  } = null;
+
+  const closedTrades: number[] = [];
+
+  for (let i = 1; i < candles.length; i++) {
+    const current = candles[i];
+    const previous = candles[i - 1];
+
+    const currentPrice = Number(current.close);
+    const previousPrice = Number(previous.close);
+
+    // SIMPLE STRATEGY LOGIC
+    let signal: "BUY" | "SELL" | null = null;
+
+    if (strategy.toLowerCase().includes("trend")) {
+      signal = currentPrice > previousPrice ? "BUY" : "SELL";
+    } else if (strategy.toLowerCase().includes("mean")) {
+      signal = currentPrice < previousPrice ? "BUY" : "SELL";
+    } else {
+      signal = currentPrice > previousPrice ? "BUY" : "SELL";
+    }
+
+    // OPEN POSITION
+    if (!position) {
+      position = {
+        entry: currentPrice,
+        side: signal === "BUY" ? "LONG" : "SHORT",
+      };
+
+      continue;
+    }
+
+    // CLOSE POSITION
+    let pnl = 0;
+
+    if (position.side === "LONG") {
+      pnl = currentPrice - position.entry;
+    } else {
+      pnl = position.entry - currentPrice;
+    }
+
+    balance += pnl;
+
+    closedTrades.push(pnl);
+
+    trades++;
+
+    if (pnl > 0) {
+      wins++;
+      totalProfit += pnl;
+    } else {
+      losses++;
+      totalLoss += Math.abs(pnl);
+    }
+
+    if (balance > peakBalance) {
+      peakBalance = balance;
+    }
+
+    const drawdown =
+      ((peakBalance - balance) / peakBalance) * 100;
+
+    if (drawdown > maxDrawdown) {
+      maxDrawdown = drawdown;
+    }
+
+    position = null;
+  }
+
+  const totalPnL = balance - capital;
+
+  const winRate =
+    trades > 0 ? (wins / trades) * 100 : 0;
+
+  const returns =
+    closedTrades.length > 0
+      ? closedTrades.reduce((a, b) => a + b, 0) /
+        closedTrades.length
+      : 0;
+
+  const sharpeRatio =
+    returns !== 0 ? totalPnL / returns : 0;
+
+  const profitFactor =
+    totalLoss > 0 ? totalProfit / totalLoss : 0;
+
+  const results = {
+    totalReturn:
+      ((totalPnL / capital) * 100).toFixed(2) + "%",
+
+    totalPnL: "$" + totalPnL.toFixed(2),
+
+    maxDrawdown: maxDrawdown.toFixed(2) + "%",
+
+    sharpeRatio: sharpeRatio.toFixed(2),
+
+    winRate: winRate.toFixed(2) + "%",
+
+    profitFactor: profitFactor.toFixed(2),
+
+    totalTrades: trades.toString(),
+
+    winningTrades: wins.toString(),
+
+    losingTrades: losses.toString(),
+
+    avgWin:
+      "$" +
+      (
+        wins > 0 ? totalProfit / wins : 0
+      ).toFixed(2),
+
+    avgLoss:
+      "$" +
+      (
+        losses > 0 ? totalLoss / losses : 0
+      ).toFixed(2),
+
+    maxProfit:
+      "$" +
+      Math.max(...closedTrades, 0).toFixed(2),
+
+    maxLoss:
+      "$" +
+      Math.abs(Math.min(...closedTrades, 0)).toFixed(2),
+
+    totalFees:
+      "$" + (trades * 0.1).toFixed(2),
+
+    finalEquity: "$" + balance.toFixed(2),
+  };
+
+  console.table(results);
+
+  return results;
+};
+
 const Simulate = () => {
     const { isConnected, sendMessage, subscribe, lastMessage } = useWebSocket();
     const [isModalOpen, setIsModalOpen] = useState(false);

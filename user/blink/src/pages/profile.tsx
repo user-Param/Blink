@@ -39,7 +39,7 @@ export const Profile = () => {
     <div className="h-full overflow-y-auto  text-white p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* ---------- Profile Header ---------- */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/10 p-8 shadow-2xl">
+        <div className="relative overflow-hidden rounded-sm bg-gradient-to-br from-[#1a1a1a] via-[#141414] to-[#0f0f0f] border border-white/10 p-8 shadow-2xl">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#FF6D1F] opacity-[0.03] blur-3xl rounded-full -translate-y-1/2 translate-x-1/2" />
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
@@ -67,7 +67,7 @@ export const Profile = () => {
               </div>
             </div>
             {/* Edit Button */}
-            <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium">
+            <button className="flex items-center gap-2 px-5 py-2.5 rounded-sm bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-sm font-medium">
               <Edit3 size={16} />
               Edit Profile
             </button>
@@ -108,10 +108,10 @@ export const Profile = () => {
           ].map((stat, i) => (
             <div
               key={i}
-              className={`p-5 rounded-2xl border backdrop-blur-sm ${stat.color} shadow-lg hover:scale-[1.02] transition-all duration-300`}
+              className={`p-5 rounded-sm border backdrop-blur-sm ${stat.color} shadow-lg hover:scale-[1.02] transition-all duration-300`}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className={`p-2 rounded-xl bg-white/5`}>
+                <div className={`p-2 rounded-sm bg-white/5`}>
                   <stat.icon size={20} className={stat.textColor} />
                 </div>
                 <p className="text-white/40 text-xs uppercase tracking-widest font-medium">
@@ -128,14 +128,14 @@ export const Profile = () => {
           {/* Quick Settings */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold ml-1">Quick Settings</h3>
-            <div className="rounded-2xl bg-white/[0.03] border border-white/5 divide-y divide-white/5">
+            <div className="rounded-sm bg-white/[0.03] border border-white/5 divide-y divide-white/5">
               {settingsItems.map((item, i) => (
                 <button
                   key={i}
                   className="w-full flex items-center justify-between p-5 hover:bg-white/[0.05] transition-colors group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="p-2 rounded-xl bg-white/5 group-hover:bg-white/10 transition-colors">
+                    <div className="p-2 rounded-sm bg-white/5 group-hover:bg-white/10 transition-colors">
                       <item.icon size={18} className="text-white/70" />
                     </div>
                     <div className="text-left">
@@ -151,8 +151,8 @@ export const Profile = () => {
 
           {/* Platform Overview Message */}
           <div className="lg:col-span-2 flex items-center justify-center">
-            <div className="rounded-3xl bg-white/[0.02] border border-white/5 p-10 w-full text-center">
-              <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#FF6D1F]/20 to-purple-500/10 flex items-center justify-center mb-6">
+            <div className="rounded-sm bg-white/[0.02] border border-white/5 p-10 w-full text-center">
+              <div className="w-20 h-20 mx-auto rounded-sm bg-gradient-to-br from-[#FF6D1F]/20 to-purple-500/10 flex items-center justify-center mb-6">
                 <TrendingUp size={36} className="text-[#FF6D1F]" />
               </div>
               <h2 className="text-2xl font-bold mb-3">Welcome to your BLINK Dashboard</h2>
@@ -161,7 +161,7 @@ export const Profile = () => {
                 and monitor live deployments — all from one place. Your performance
                 data will appear here once you run your first simulation.
               </p>
-              <button className="mt-6 px-6 py-2.5 rounded-xl bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-semibold transition-colors shadow-lg shadow-[#FF6D1F]/20">
+              <button className="mt-6 px-6 py-2.5 rounded-sm bg-[#FF6D1F] hover:bg-[#e55d1a] text-white font-semibold transition-colors shadow-lg shadow-[#FF6D1F]/20">
                 Start Researching
               </button>
             </div>

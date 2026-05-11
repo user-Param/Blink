@@ -231,8 +231,8 @@ const Social = () => {
       {/* Main Content */}
       <div className="max-w-4xl mx-auto p-6">
         
-        <div className="text-xl font-bold mb-6">Trending tokens</div>
-        <div className="text-xl font-bold mb-6">Trending strategies</div>
+        {/* <div className="text-xl font-bold mb-6">Trending tokens</div>
+        <div className="text-xl font-bold mb-6">Trending strategies</div> */}
         <div className="text-xl font-bold mb-6">Explore Strategies</div>
 
         {/* Strategy Cards Grid */}
