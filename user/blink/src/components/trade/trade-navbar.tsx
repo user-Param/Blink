@@ -9,7 +9,7 @@ type TradeNavbarProps = {
 
 
 type ExchangeOption = {
-  id: "BINANCE" | "JUPITER";
+  id: "BINANCE" | "JUPITER" | "BIRDEYE";
   label: string;
   color: string;        // accent colour for the badge
   badgeBg: string;      // tailwind bg class
@@ -30,6 +30,13 @@ const EXCHANGES: ExchangeOption[] = [
     color: "#ff0000",
     badgeBg: "transparent",
     dotColor: "bg-violet-400",
+  },
+  {
+    id: "BIRDEYE",
+    label: "Birdeye",
+    color: "#00f2ff",
+    badgeBg: "transparent",
+    dotColor: "bg-cyan-400",
   },
 ];
 
