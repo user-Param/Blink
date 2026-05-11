@@ -7,6 +7,11 @@ RUN npm ci
 # Install missing dependencies that were in root but are needed here
 RUN npm install --no-save @google/generative-ai @react-three/fiber @react-three/drei three postprocessing face-api.js ollama react-window
 COPY . .
+
+# Deployment fix: Replace localhost with Render URLs
+RUN find src -type f \( -name "*.tsx" -o -name "*.ts" \) -exec sed -i 's/localhost:9000/blink-datafeed.onrender.com/g' {} + && \
+    find src -type f \( -name "*.tsx" -o -name "*.ts" \) -exec sed -i 's/localhost:9001/blink-executor.onrender.com/g' {} +
+
 # Run build directly with vite to skip failing tsc (type check)
 RUN npx vite build
 

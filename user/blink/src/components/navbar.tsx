@@ -15,7 +15,7 @@ const Navbar = () => {
   ];
 
   return (
-    <div className=" border border-white/30 flex items-center justify-between p-4">
+    <div className=" flex items-center justify-between p-4 backdrop-blur-xl bg-[#181818]">
       <Link to="/" className="flex items-center gap-2 cursor-pointer group">
         <div className="relative">
           <Zap className="text-[#FF6D1F] fill-[#FF6D1F] animate-pulse" size={20} />
@@ -41,7 +41,7 @@ const Navbar = () => {
               to={link.path}
               className={`px-4 py-1 text-sm font-bold cursor-pointer transition-all relative group ${
                 location.pathname === link.path
-                  ? "text-white"
+                  ? "text-[#FF6D1F]"
                   : "text-white/40 hover:text-white"
               }`}
             >

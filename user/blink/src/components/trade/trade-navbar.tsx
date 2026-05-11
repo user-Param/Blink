@@ -66,7 +66,7 @@ const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps)
   };
 
   return (
-    <div className="h-14 flex items-center px-4 gap-8 bg-[#111] shrink-0 border border-white/30">
+    <div className="h-14 flex items-center px-4 gap-8 bg-[#111] shrink-0">
       <div className="flex items-center gap-3">
         <div className="flex -space-x-2">
           <div className="w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center text-[10px] font-bold  shadow-lg shadow-orange-500/20">B</div>

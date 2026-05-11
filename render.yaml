@@ -1,0 +1,76 @@
+version: 1
+services:
+  - type: web
+    name: blink-frontend
+    env: docker
+    dockerfilePath: user/blink/dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: VITE_DATAFEED_URL
+        value: https://blink-datafeed.onrender.com
+      - key: VITE_EXECUTOR_URL
+        value: https://blink-executor.onrender.com
+
+  - type: web
+    name: blink-datafeed
+    env: docker
+    dockerfilePath: datafeed/dockerfile
+    dockerContext: .
+    plan: free
+    port: 9000
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: blink-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: blink-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: blink-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: blink-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: blink-db
+          property: password
+
+  - type: private-service
+    name: blink-broker
+    env: docker
+    dockerfilePath: broker/dockerfile
+    dockerContext: .
+    plan: free
+    port: 8080
+
+  - type: private-service
+    name: blink-executor
+    env: docker
+    dockerfilePath: executor/dockerfile
+    dockerContext: .
+    plan: free
+    port: 9001
+
+  - type: web
+    name: blink-engine
+    env: docker
+    dockerfilePath: engine/dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: DATAFEED_HOST
+        value: blink-datafeed
+      - key: EXECUTOR_HOST
+        value: blink-executor
+
+databases:
+  - name: blink-db
+    databaseName: blink
+    user: blink
+    plan: free

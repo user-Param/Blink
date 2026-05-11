@@ -47,6 +47,7 @@ const Docs = () => {
               <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
                 BLINK is a high performance algorithmic trading Platform built for the next generation of algorithmic traders.
               </p>
+              <h1 className="text-4xl text-bold text-white">The Problem</h1>
               <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
                 Trading financial markets is not just difficult it’s unforgiving. Even a single mistake can erase the gains of dozens of correct decisions. 
                 And even when you’re right, profits are never guaranteed. You are not just trading the markets you are competing against institutions, funds,
@@ -54,9 +55,7 @@ const Docs = () => {
                 is not enough And belief alone does not create an edge.
               </p>
               <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
-              This is where most participants fail. They approach markets with fragmented tools, delayed data, and decision making processes that are reactive rather than predictive.
-              They rely on manual execution, limited backtesting, and assumptions that cannot survive real market conditions. Even when they experience short term success, it is rarely
-              repeatable because it is not built on a system.
+              
               </p>
               <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
                 BLINK exists to give you that edge. Not just by simplifying and automating trading, but by equipping you with the tools used by top quant firms to operate in a truly 

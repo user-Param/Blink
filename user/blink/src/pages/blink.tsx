@@ -10,15 +10,15 @@ import { Profile } from "./profile";
 import Social from "./social";
 
 const Blink = () => {
-    const [activePage, setActivePage] = useState("home");
+    
     return(
         <div className="min-h-screen bg-[#181818]">
-            <div className="text-white/50 sticky top-0 bg-[#181818] z-50">
+            <div className="text-white/50 sticky top-0 z-50">
                 <Navbar/>
             </div>
             <div>
   <Routes>
-        <Route path="/" element={<Home setActivePage={setActivePage}/>} />
+        <Route path="/" element={<Home />} />
         <Route path="/trade" element={<Trade />} />
         <Route path="/research" element={<Editor />} />
         <Route path="/simulate" element={<Simulate />} />

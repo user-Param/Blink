@@ -8,12 +8,11 @@ const strategies = [
     name: "Golden Cross ETH",
     author: "Alex Quant",
     language: "Python",
-    description: "50/200 EMA crossover on ETHUSDT hourly",
+    description: "50/200 EMA crossover on ETHUSDT",
     winRate: "68%",
     backtestReturn: "+124.5%",
     postedAgo: "2h ago",
     comments: 14,
-    icon: "⚡",
   },
   {
     id: 2,
@@ -25,7 +24,6 @@ const strategies = [
     backtestReturn: "+98.3%",
     postedAgo: "5h ago",
     comments: 23,
-    icon: "🔥",
   },
   {
     id: 3,
@@ -37,7 +35,6 @@ const strategies = [
     backtestReturn: "+55.7%",
     postedAgo: "8h ago",
     comments: 8,
-    icon: "📊",
   },
   {
     id: 4,
@@ -49,7 +46,6 @@ const strategies = [
     backtestReturn: "+213.4%",
     postedAgo: "12h ago",
     comments: 31,
-    icon: "🚀",
   },
   {
     id: 5,
@@ -61,7 +57,7 @@ const strategies = [
     backtestReturn: "+87.9%",
     postedAgo: "1d ago",
     comments: 19,
-    icon: "🧠",
+
   },
   {
     id: 6,
@@ -73,7 +69,6 @@ const strategies = [
     backtestReturn: "+156.2%",
     postedAgo: "2d ago",
     comments: 42,
-    icon: "🤖",
   },
   {
     id: 1,
@@ -85,7 +80,6 @@ const strategies = [
     backtestReturn: "+124.5%",
     postedAgo: "2h ago",
     comments: 14,
-    icon: "⚡",
   },
   {
     id: 2,
@@ -97,7 +91,6 @@ const strategies = [
     backtestReturn: "+98.3%",
     postedAgo: "5h ago",
     comments: 23,
-    icon: "🔥",
   },
   {
     id: 3,
@@ -109,7 +102,6 @@ const strategies = [
     backtestReturn: "+55.7%",
     postedAgo: "8h ago",
     comments: 8,
-    icon: "📊",
   },
   {
     id: 4,
@@ -121,7 +113,6 @@ const strategies = [
     backtestReturn: "+213.4%",
     postedAgo: "12h ago",
     comments: 31,
-    icon: "🚀",
   },
   {
     id: 5,
@@ -133,7 +124,6 @@ const strategies = [
     backtestReturn: "+87.9%",
     postedAgo: "1d ago",
     comments: 19,
-    icon: "🧠",
   },
   {
     id: 6,
@@ -145,7 +135,6 @@ const strategies = [
     backtestReturn: "+156.2%",
     postedAgo: "2d ago",
     comments: 42,
-    icon: "🤖",
   },
   {
     id: 1,
@@ -157,7 +146,6 @@ const strategies = [
     backtestReturn: "+124.5%",
     postedAgo: "2h ago",
     comments: 14,
-    icon: "⚡",
   },
   {
     id: 2,
@@ -169,7 +157,6 @@ const strategies = [
     backtestReturn: "+98.3%",
     postedAgo: "5h ago",
     comments: 23,
-    icon: "🔥",
   },
   {
     id: 3,
@@ -181,7 +168,6 @@ const strategies = [
     backtestReturn: "+55.7%",
     postedAgo: "8h ago",
     comments: 8,
-    icon: "📊",
   },
   {
     id: 4,
@@ -193,7 +179,6 @@ const strategies = [
     backtestReturn: "+213.4%",
     postedAgo: "12h ago",
     comments: 31,
-    icon: "🚀",
   },
   {
     id: 5,
@@ -205,7 +190,6 @@ const strategies = [
     backtestReturn: "+87.9%",
     postedAgo: "1d ago",
     comments: 19,
-    icon: "🧠",
   },
   {
     id: 6,
@@ -217,11 +201,10 @@ const strategies = [
     backtestReturn: "+156.2%",
     postedAgo: "2d ago",
     comments: 42,
-    icon: "🤖",
   },
 ];
 
-const tabs = ["Home", "Leaderboard", "Trending now", "Chat", "Terminal"];
+const tabs = ["Social", "Leaderboard", "Trending now"];
 
 const Social = () => {
   const [activeTab, setActiveTab] = useState("Home");
@@ -246,45 +229,50 @@ const Social = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <TrendingUp className="text-[#FF6D1F]" size={28} />
-          Explore Strategies
-        </h1>
+      <div className="max-w-4xl mx-auto p-6">
+        
+        <div className="text-xl font-bold mb-6">Trending tokens</div>
+        <div className="text-xl font-bold mb-6">Trending strategies</div>
+        <div className="text-xl font-bold mb-6">Explore Strategies</div>
 
         {/* Strategy Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {strategies.map((s) => (
             <div
               key={s.id}
-              className="bg-[#111] border border-white/10 rounded-2xl p-5 hover:border-[#FF6D1F]/30 transition-all hover:shadow-lg hover:shadow-[#FF6D1F]/5 group cursor-pointer"
+              className="bg-[#111] border border-white/10 p-5 hover:border-[#FF6D1F]/30 transition-all hover:shadow-lg hover:shadow-[#FF6D1F]/5 group cursor-pointer"
             >
-              {/* Header: Icon + Name + Language */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">{s.icon}</span>
+              {/* Header: Image Placeholder + Name/Language + WinRate */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex gap-2">
                   <div>
-                    <h3 className="font-bold text-white group-hover:text-[#FF6D1F] transition-colors">
+                    {/* IMAGE PLACEHOLDER - exactly as requested */}
+                    <div className="min-h-[100px] border border-white/20 bg-black/20 w-[100%]" />
+                    <p className="text-white transition-colors mt-2">
                       {s.name}
-                    </h3>
-                    <p className="text-xs text-white/40">{s.language} • by {s.author}</p>
+                    </p>
+                    <p className="text-xs text-white/40">
+                      {s.language} • by {s.author}
+                    </p>
                   </div>
                 </div>
-                <span className="bg-[#FF6D1F]/10 text-[#FF6D1F] text-xs font-semibold px-2 py-1 rounded-full">
-                  {s.winRate}
-                </span>
+                
               </div>
 
               {/* Description */}
-              <p className="text-sm text-white/50 mb-4 leading-relaxed">{s.description}</p>
+              <p className="text-sm text-white/50 mb-4 leading-relaxed">
+                {s.description}
+              </p>
 
               {/* Stats Row */}
-              <div className="flex items-center justify-between text-xs text-white/30 mb-4">
-                <span className="flex items-center gap-1">
+              <div className="gap-3 items-center text-xs text-white/30 mb-4">
+                <span className="flex items-center">
                   <Clock size={12} />
                   {s.postedAgo}
                 </span>
-                <span className="font-mono text-green-400">{s.backtestReturn}</span>
+                <span className="font-mono text-green-400">
+                  {s.backtestReturn}
+                </span>
                 <span className="flex items-center gap-1">
                   <MessageCircle size={14} className="text-white/40" />
                   {s.comments}
@@ -292,7 +280,7 @@ const Social = () => {
               </div>
 
               {/* Action Button */}
-              <button className="w-full py-2.5 rounded-xl bg-white/5 hover:bg-[#FF6D1F]/10 border border-white/5 hover:border-[#FF6D1F]/30 text-xs font-bold text-white/80 hover:text-[#FF6D1F] transition-all flex items-center justify-center gap-2">
+              <button className="w-full py-2.5 bg-white/5 hover:bg-[#FF6D1F]/10 border border-white/5 hover:border-[#FF6D1F]/30 text-xs font-bold text-white/80 hover:text-[#FF6D1F] transition-all flex items-center justify-center gap-2">
                 <ArrowUpRight size={14} />
                 View & Deploy
               </button>
