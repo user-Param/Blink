@@ -12,7 +12,8 @@ services:
     dockerfilePath: datafeed/dockerfile
     dockerContext: .
     plan: free
-    port: 9000
+    env:
+      PORT: "9000"
 
   - type: pserv
     name: blink-broker
