@@ -70,18 +70,18 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#111] border border-white/30">
+    <div className="w-full h-full flex flex-col bg-[#111] ">
       {/* Mode Switcher */}
       <div className="p-4 flex gap-1 bg-[#0d0d0d] border-b border-white/5 shrink-0">
         <button 
           onClick={() => setTradeMode("manual")}
-          className={`flex-1 py-2.5 rounded-sm text-xs font-bold transition-all duration-300 ${tradeMode === "manual" ? "bg-white/10 text-white border border-white/10 shadow-lg" : "text-white/30 hover:text-white hover:bg-white/5"}`}
+          className={`flex-1 py-2.5  text-xs font-bold transition-all duration-300 ${tradeMode === "manual" ? "bg-white/10 text-white border border-white/10 shadow-lg" : "text-white/30 hover:text-white hover:bg-white/5"}`}
         >
           Manual
         </button>
         <button 
           onClick={() => setTradeMode("auto")}
-          className={`flex-1 py-2.5 rounded-sm text-xs font-bold transition-all duration-300 ${tradeMode === "auto" ? "bg-[#FF6D1F] text-white shadow-[0_0_20px_rgba(255,109,31,0.3)]" : "text-white/30 hover:text-white hover:bg-white/5"}`}
+          className={`flex-1 py-2.5  text-xs font-bold transition-all duration-300 ${tradeMode === "auto" ? "bg-[#FF6D1F] text-white shadow-[0_0_20px_rgba(255,109,31,0.3)]" : "text-white/30 hover:text-white hover:bg-white/5"}`}
         >
           Algorithmic
         </button>
@@ -91,9 +91,9 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
         // MANUAL – no strategies here
         <div className="flex-1 p-5 flex flex-col space-y-6 overflow-y-auto custom-scrollbar">
           {/* Order Type Selector */}
-          <div className="flex bg-black/40 p-1 rounded-sm border border-white/5 shrink-0">
+          <div className="flex bg-black/40 p-1  border border-white/5 shrink-0">
             {["limit", "market"].map((t) => (
-              <button key={t} onClick={() => setOrderType(t as any)} className={`flex-1 py-2 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${orderType === t ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}>{t}</button>
+              <button key={t} onClick={() => setOrderType(t as any)} className={`flex-1 py-2  text-[10px] font-black uppercase tracking-widest transition-all ${orderType === t ? "bg-white/10 text-white" : "text-white/20 hover:text-white/40"}`}>{t}</button>
             ))}
           </div>
 
@@ -105,8 +105,9 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
               </div>
               <input 
                 type="number" 
-                placeholder={orderType === "market" ? "Market Price" : "65420.50"}
-                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:border-[#FF6D1F]/50 transition-all placeholder:text-white/10"
+                placeholder={orderType === "market" ? `${marketData?.price?.toFixed(2) || "0.00"}`
+    : "65420.50"}
+                className="w-full text-white/70 bg-black/60 border border-white/10 px-4 py-3.5 text-sm font-mono focus:outline-none focus:border-[#FF6D1F]/50 transition-all placeholder:text-white/10"
                 value={orderType === "limit" ? marketData?.price?.toFixed(2) : ""}
                 readOnly={orderType === "market"}
               />
@@ -118,7 +119,7 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
               <div className="relative">
                 <input 
                   type="number" placeholder="0.00"
-                  className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:border-[#FF6D1F]/50 transition-all"
+                  className="w-full text-white bg-black/60 border border-white/10 px-4 py-3.5 text-sm font-mono focus:outline-none focus:border-[#FF6D1F]/50 transition-all"
                   value={amount} onChange={(e) => setAmount(e.target.value)}
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-white/20">BTC</span>
@@ -128,12 +129,12 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-3 pt-2 shrink-0">
-            <button onClick={() => handleOrder("buy")} className="py-4 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-green-500/20 transition-all active:scale-[0.95]">Buy</button>
-            <button onClick={() => handleOrder("sell")} className="py-4 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 transition-all active:scale-[0.95]">Sell</button>
+            <button onClick={() => handleOrder("buy")} className="py-4  bg-green-500 hover:bg-green-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-green-500/20 transition-all active:scale-[0.95]">Buy</button>
+            <button onClick={() => handleOrder("sell")} className="py-4  bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-red-500/20 transition-all active:scale-[0.95]">Sell</button>
           </div>
 
           {/* Risk Info */}
-          <div className="mt-auto p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3 shrink-0">
+          <div className="mt-auto p-4  bg-white/5 border border-white/5 space-y-3 shrink-0">
             <div className="flex items-center gap-2 text-white/40"><Info size={14} /><span className="text-[10px] font-bold uppercase">Order Value</span></div>
             <div className="flex justify-between font-mono text-xs">
               <span className="text-white/20">Est. Total</span>
@@ -155,7 +156,7 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
           <div className="flex-1 space-y-3 pr-1">
             {strategies.length > 0 ? (
               strategies.map((strat) => (
-                <div key={strat.id} className={`p-4 rounded-sm border transition-all duration-300 flex justify-between ${activeStrategy === strat.id ? "bg-[#FF6D1F]/10 border-[#FF6D1F]/30 shadow-lg shadow-[#FF6D1F]/5" : "bg-black/30 border-white/5 hover:border-white/10"}`}>
+                <div key={strat.id} className={`p-4  border transition-all duration-300 flex justify-between ${activeStrategy === strat.id ? "bg-[#FF6D1F]/10 border-[#FF6D1F]/30 shadow-lg shadow-[#FF6D1F]/5" : "bg-black/30 border-white/5 hover:border-white/10"}`}>
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h4 className={`font-bold text-sm ${activeStrategy === strat.id ? "text-white" : "text-white/80"}`}>{strat.name}</h4>
@@ -165,7 +166,7 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
                   </div>
 
 
-                  <button onClick={() => toggleStrategy(strat.id)} className={` p-2 rounded-sm text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeStrategy === strat.id ? "bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30" : "bg-[#FF6D1F] text-white shadow-lg shadow-[#FF6D1F]/20 hover:bg-[#e55d1a]"}`}>
+                  <button onClick={() => toggleStrategy(strat.id)} className={` p-2  text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${activeStrategy === strat.id ? "bg-red-500/20 text-red-400 border border-red-500/20 hover:bg-red-500/30" : "bg-[#FF6D1F] text-white shadow-lg shadow-[#FF6D1F]/20 hover:bg-[#e55d1a]"}`}>
                     {activeStrategy === strat.id ? (
                       <><Square size={12} fill="currentColor" className="animate-pulse" /> Stop Strategy</>
                     ) : (
@@ -175,7 +176,7 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
                 </div>
               ))
             ) : (
-              <div className="text-center text-white/20 text-xs border border-dashed border-white/10 rounded-2xl p-8">No strategies found.</div>
+              <div className="text-center text-white/20 text-xs border border-dashed border-white/10  p-8">No strategies found.</div>
             )}
           </div>
         </div>

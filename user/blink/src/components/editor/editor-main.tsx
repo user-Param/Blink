@@ -176,7 +176,7 @@ const EditorMain = ({ activeFile, updateFileContent }: Props) => {
                               return (
                                 <pre
                                   key={i}
-                                  className="p-4 bg-black/40 font-mono text-[11px] text-white/90 whitespace-pre-wrap leading-relaxed"
+                                  className="p-4 font-mono text-[11px] text-white/90 whitespace-pre-wrap leading-relaxed"
                                 >
                                   {out.data}
                                 </pre>
@@ -185,7 +185,7 @@ const EditorMain = ({ activeFile, updateFileContent }: Props) => {
                               return (
                                 <div
                                   key={i}
-                                  className="p-4 bg-black/40 flex justify-center"
+                                  className="p-4  flex justify-center"
                                 >
                                   <img
                                     src={`data:image/png;base64,${out.data}`}

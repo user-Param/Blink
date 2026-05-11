@@ -43,7 +43,7 @@ const EXCHANGES: ExchangeOption[] = [
 
 const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedExchange, setSelectedExchange] = useState<ExchangeOption>(EXCHANGES[0]);
+  const [selectedExchange, setSelectedExchange] = useState<ExchangeOption>(EXCHANGES[1]);
 
   // Calculate 24h change (mock for now - would come from backend)
   const price24hAgo = 69500;
@@ -109,7 +109,7 @@ const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps)
       </div>
 
       <div className="hidden lg:flex flex-col">
-        <span className="text-[10px] text-white/30 uppercase font-bold tracking-wider">24h Volume (BTC)</span>
+        <span className="text-[10px] text-white/30 uppercase font-bold tracking-wider">24h Volume</span>
         <span className="text-[11px] font-mono text-white/80">{volume24h.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
       </div>
 

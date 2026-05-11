@@ -6,7 +6,7 @@ type TradeOrderBookProps = {
 };
 
 const TradeOrderBook = ({ marketData }: TradeOrderBookProps) => {
-  const price = marketData?.price || 65420.50;
+  const price = marketData?.price || 0.0;
 
   const orderBook = useMemo(() => {
     const asks = Array.from({ length: 12 }, (_, i) => ({

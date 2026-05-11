@@ -34,9 +34,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# ============================================
-# 1. 2D Plot (line + scatter)
-# ============================================
 x = np.linspace(0, 2 * np.pi, 100)
 y1 = np.sin(x)
 y2 = np.cos(x)
@@ -49,9 +46,6 @@ plt.legend()
 plt.grid(True, alpha=0.3)
 plt.show()
 
-# ============================================
-# 2. 3D Plot (surface)
-# ============================================
 X = np.linspace(-5, 5, 50)
 Y = np.linspace(-5, 5, 50)
 X, Y = np.meshgrid(X, Y)
@@ -66,22 +60,7 @@ ax.set_xlabel("X")
 ax.set_ylabel("Y")
 ax.set_zlabel("Z")
 plt.show()
-
-# ============================================
-# 3. Text Output – DataFrame
-# ============================================
-df = pd.DataFrame({
-    'Asset': ['BTC', 'ETH', 'SOL'],
-    'Price': [64200, 3200, 135],
-    '24h Change %': [2.34, -1.12, 5.67]
-})
-print("Portfolio Snapshot:")
-print(df.to_string(index=False))
-
-# ============================================
-# 4. Intentional Error (uncomment to test)
-# ============================================
-# x = 1 / 0`,
+`,
           output: ""
         }
       ]),
@@ -333,7 +312,7 @@ class RSIStrategy:
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#1e1e1e]">
+    <div className="flex h-screen">
       {/* Explorer */}
       <div
         className="h-full border-r border-white/10"

@@ -10,12 +10,6 @@ const std::unordered_map<std::string, std::string> Exchange2::SYMBOL_TO_MINT = {
     {"SOL",      "So11111111111111111111111111111111111111112"},
     {"SOLUSDT",  "So11111111111111111111111111111111111111112"},
     {"SOL-PERP", "So11111111111111111111111111111111111111112"},
-    {"BTC",      "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh"},
-    {"BTCUSDT",  "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh"},
-    {"BTC-PERP", "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh"},
-    {"ETH",      "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
-    {"ETHUSDT",  "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
-    {"ETH-PERP", "7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs"},
 };
 
 Exchange2::Exchange2() {

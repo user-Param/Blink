@@ -94,7 +94,7 @@ const TradePositions = () => {
 
   return (
     <div className="flex h-full
-    flex-col overflow-hidden border border-white/30">
+    flex-col overflow-hidden">
       {/* Tabs Header */}
       <div className="flex border-b border-white/5 bg-[#111] shrink-0">
         {tabs.map((tab) => (

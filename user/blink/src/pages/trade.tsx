@@ -25,13 +25,14 @@ export const Trade = () => {
     return (
         <div className="h-screen flex flex-1 overflow-hidden">
 
-        <div className="flex-1 text-white overflow-hidden">
+        <div className="flex-1 text-white overflow-hidden border border-white/30">
             <TradeNavbar 
                 isConnected={isOrderConnected && isMarketConnected} 
                 marketData={marketData} 
                 sendMessage={sendMarketMessage} 
             />
-            <div className="flex h-[50%] justify-evenly ">                <div className="min-w-[30%] border border-white/30">
+            <div className="flex h-[50%] justify-evenly ">                
+                <div className="min-w-[30%] border border-white/30">
                     <TradeOrderBook marketData={marketData} />
                 </div>
                 
