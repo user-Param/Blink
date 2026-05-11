@@ -9,13 +9,16 @@
 #include <functional>
 #include "exchange/exchange1.h"
 #include "exchange/exchange2.h"
+#include "exchange/exchange3.h"
 
 class Exchange1;
 class Exchange2;
+class Exchange3;
 
 enum ExchangeType {
     BINANCE,
-    JUPITER
+    JUPITER,
+    BIRDEYE
 };
 
 
@@ -57,6 +60,7 @@ private:
     ExchangeType exchange_type_;
     std::unique_ptr<Exchange1> exchange1_;
     std::unique_ptr<Exchange2> exchange2_;
+    std::unique_ptr<Exchange3> exchange3_;
 
     void _connect();
     void _subscribe(const std::vector<std::string>& syms);

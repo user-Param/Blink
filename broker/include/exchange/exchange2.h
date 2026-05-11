@@ -34,6 +34,7 @@ public:
     void connect();
     void subscribe(const std::vector<std::string>& symbols);
     void set_callback(PriceCallback callback);
+    void stop();
 
 private:
     // Internal polling loop  (replaces Exchange1's read_loop + io_thread)
