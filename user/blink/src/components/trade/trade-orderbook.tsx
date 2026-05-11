@@ -53,7 +53,7 @@ const TradeOrderBook = ({ marketData }: TradeOrderBookProps) => {
           </div>
 
           {/* Spread / Mid Price */}
-          <div className="py-3 border-y border-white/5 my-1 flex flex-col items-center justify-center bg-white/5 rounded-lg shadow-inner">
+          <div className="py-3 border-y border-white/5 my-1 flex flex-col items-center justify-center bg-white/5 shadow-inner">
             <span className={`text-lg font-bold font-mono tracking-tight leading-none ${marketData?.price ? "text-green-400" : "text-white"}`}>
               {price.toFixed(2)}
             </span>
