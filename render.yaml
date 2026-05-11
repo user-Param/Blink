@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: blink-frontend
+    runtime: docker
+    dockerfilePath: user/blink/dockerfile
+    dockerContext: .
+    plan: free
+
+  - type: web
+    name: blink-datafeed
+    runtime: docker
+    dockerfilePath: datafeed/dockerfile
+    dockerContext: .
+    plan: free
+
+  - type: private_service
+    name: blink-broker
+    runtime: docker
+    dockerfilePath: broker/dockerfile
+    dockerContext: .
+    plan: starter
+
+  - type: private_service
+    name: blink-executor
+    runtime: docker
+    dockerfilePath: executor/dockerfile
+    dockerContext: .
+    plan: starter
+
+
+  - type: web
+    name: blink-engine
+    runtime: docker
+    dockerfilePath: engine/dockerfile
+    dockerContext: .
+    plan: free
