@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, X, Upload, Play, Database, FileText, Activity, TrendingUp, TrendingDown, BarChart3, Download } from "lucide-react";
 import SimulateCard from "./simulate-card";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import "./simulation-results";
+import { calculateSimulationResults } from "./simulation-results";
 
 
 type Dataset = {

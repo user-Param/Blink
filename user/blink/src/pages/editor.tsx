@@ -408,7 +408,7 @@ class RSIStrategy:
       {/* Deployment Warning Modal */}
       {showDeployWarning && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#1a1a1a] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-[#1a1a1a] border border-white/10 w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-white/5">
               <h3 className="text-xl font-bold text-white flex items-center gap-2">
                 <Shield size={20} className="text-[#FF6D1F]" />

@@ -21,6 +21,7 @@ const TradeRealtimeMonitor = () => {
   const [isConnected, setIsConnected] = useState(false);
   const ordersEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectDelayRef = useRef(3000);
 
   useEffect(() => {
     const connectToExecutor = () => {
@@ -28,9 +29,9 @@ const TradeRealtimeMonitor = () => {
         const websocket = new WebSocket('ws://localhost:9001');
 
         websocket.onopen = () => {
-          console.log('[TradeMonitor] Connected to Executor');
           setIsConnected(true);
           wsRef.current = websocket;
+          reconnectDelayRef.current = 3000; // Reset backoff on successful connect
           websocket.send(JSON.stringify({ type: 'ping' }));
         };
 
@@ -54,28 +55,26 @@ const TradeRealtimeMonitor = () => {
               };
               
               setOrders(prev => [newOrder, ...prev].slice(0, 50));
-              console.log('[TradeMonitor] New order:', newOrder);
             }
           } catch (e) {
-            console.log('[TradeMonitor] Message received:', event.data);
+            // Removed production log
           }
         };
 
-        websocket.onerror = (error) => {
-          console.error('[TradeMonitor] WebSocket error:', error);
+        websocket.onerror = () => {
           setIsConnected(false);
         };
 
         websocket.onclose = () => {
-          console.log('[TradeMonitor] Disconnected from Executor');
           setIsConnected(false);
-          // Attempt to reconnect after 3 seconds
-          setTimeout(connectToExecutor, 3000);
+          // Reconnect with exponential backoff (3s → 6s → 12s → max 30s)
+          setTimeout(connectToExecutor, reconnectDelayRef.current);
+          reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30000);
         };
 
         setWs(websocket);
-      } catch (error) {
-        console.error('[TradeMonitor] Connection error:', error);
+      } catch {
+        // Connection failed — will retry via onclose backoff
       }
     };
 
@@ -90,7 +89,7 @@ const TradeRealtimeMonitor = () => {
 
   // Auto-scroll to latest order
   useEffect(() => {
-    ordersEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    ordersEndRef.current?.scrollIntoView({ behavior: 'auto' });
   }, [orders]);
 
   const getStatusColor = (status: string) => {

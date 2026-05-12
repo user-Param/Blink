@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { LayoutDashboard, TrendingUp, TrendingDown, XCircle, AlertCircle, Clock, Activity } from "lucide-react";
 import { useOrderTracking } from "../../hooks/useOrderTracking";
 
@@ -19,8 +19,6 @@ interface LiveOrder {
 const TradePositions = () => {
   const [activeTab, setActiveTab] = useState("Open Orders");
   const { positions, summary, orders, isConnected } = useOrderTracking();
-  const [liveOrders, setLiveOrders] = useState<LiveOrder[]>([]);
-  const liveOrdersRef = useRef<LiveOrder[]>([]);
 
   const tabs = ["Open Orders", "Positions", "Trade History", "Live Activity", "Funds"];
 
@@ -34,63 +32,8 @@ const TradePositions = () => {
     (o) => o.status === "ACCEPTED"
   ).slice(0, 10);
 
-  // Connect to executor for live activity stream
-  useEffect(() => {
-    const connectToExecutor = () => {
-      try {
-        const websocket = new WebSocket('ws://localhost:9001');
-
-        websocket.onopen = () => {
-          console.log('[TradePositions] Connected to executor for live activity');
-        };
-
-        websocket.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
-            
-            if (data.type === 'order_result') {
-              const newOrder: LiveOrder = {
-                id: `${data.timestamp}-${Math.random()}`,
-                order_id: data.order_id,
-                strategy_id: data.strategy_id || 'default',
-                side: data.side || 'BUY',
-                symbol: data.symbol || 'UNKNOWN',
-                quantity: data.quantity || 1,
-                price: data.price || 0,
-                status: data.status,
-                exchange_order_id: data.exchange_order_id,
-                message: data.message,
-                timestamp: data.timestamp
-              };
-              
-              
-              liveOrdersRef.current = [newOrder, ...liveOrdersRef.current].slice(0, 100);
-              setLiveOrders([...liveOrdersRef.current]);
-            }
-          } catch (e) {
-            console.log('[TradePositions] Message received:', event.data);
-          }
-        };
-
-        websocket.onerror = () => {
-          console.error('[TradePositions] WebSocket error');
-        };
-
-        websocket.onclose = () => {
-          console.log('[TradePositions] Disconnected from executor');
-          setTimeout(connectToExecutor, 3000);
-        };
-
-        return () => {
-          websocket.close();
-        };
-      } catch (error) {
-        console.error('[TradePositions] Connection error:', error);
-      }
-    };
-
-    connectToExecutor();
-  }, []);
+  // Derive live orders from useOrderTracking data (avoids redundant WS connection)
+  const liveOrders: LiveOrder[] = useMemo(() => orders.slice(0, 100), [orders]);
 
   return (
     <div className="flex h-full
@@ -526,4 +469,4 @@ const TradePositions = () => {
   );
 };
 
-export default TradePositions;
+export default React.memo(TradePositions);

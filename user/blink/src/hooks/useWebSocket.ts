@@ -8,7 +8,10 @@ interface UseWebSocketResult {
   marketData: { price?: number; bid?: number; ask?: number; symbol?: string; timestamp?: number } | null;
 }
 
-export const useWebSocket = (url: string = "ws://localhost:9000"): UseWebSocketResult => {
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "wss://blink-backend.onrender.com";
+
+export const useWebSocket = (path: string = "/ws/datafeed"): UseWebSocketResult => {
+  const url = `${BACKEND_URL}${path}`;
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
@@ -19,7 +22,6 @@ export const useWebSocket = (url: string = "ws://localhost:9000"): UseWebSocketR
     const ws = new WebSocket(url);
 
     ws.onopen = () => {
-      console.log("WebSocket connected to datafeed server");
       setIsConnected(true);
       // Send queued messages
       while (messageQueue.current.length > 0) {
@@ -29,12 +31,11 @@ export const useWebSocket = (url: string = "ws://localhost:9000"): UseWebSocketR
     };
 
     ws.onclose = () => {
-      console.log("WebSocket disconnected");
       setIsConnected(false);
     };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
+    ws.onerror = () => {
+      // Connection error — isConnected state tracks status for UI
     };
 
     ws.onmessage = (event) => {

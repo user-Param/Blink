@@ -11,9 +11,9 @@ import { Group, Panel } from "react-resizable-panels";
 
 export const Trade = () => {
     // Market data connection
-    const { isConnected: isMarketConnected, marketData, subscribe, sendMessage: sendMarketMessage } = useWebSocket("ws://localhost:9000");
+    const { isConnected: isMarketConnected, marketData, subscribe, sendMessage: sendMarketMessage } = useWebSocket("/ws/datafeed");
     // Order/Executor connection
-    const { isConnected: isOrderConnected, sendMessage: sendOrderMessage } = useWebSocket("ws://localhost:9001");
+    const { isConnected: isOrderConnected, sendMessage: sendOrderMessage } = useWebSocket("/ws/executor");
 
     useEffect(() => {
         // Subscribe to consolidated market data

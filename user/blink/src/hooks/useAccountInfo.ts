@@ -36,7 +36,8 @@ export const useAccountInfo = () => {
         wsRef.current.close();
       }
 
-      const ws = new WebSocket('ws://localhost:9001');
+      const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "wss://blink-backend.onrender.com";
+      const ws = new WebSocket(`${BACKEND_URL}/ws/executor`);
       wsRef.current = ws;
 
       ws.onopen = () => {

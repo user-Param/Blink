@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# =============================================================================
+# BLINK Trading Platform — Northflank CLI Deployment (FREE TIER)
+# =============================================================================
+# To keep this deployment FREE (Developer Sandbox Plan):
+# 1. You MUST add a payment method to your Northflank account for verification.
+# 2. The Sandbox plan allows only 2 services and 1 addon for free.
+#    We are deploying the most critical components.
+# =============================================================================
+
+PROJECT_NAME="blink-free"
+
+echo "==> Creating Northflank project: ${PROJECT_NAME}"
+northflank create project -i '{
+  "name": "blink-free",
+  "description": "BLINK Trading Platform - Free Tier",
+  "region": "europe-west"
+}' -o json
+
+PROJECT_ID=$(northflank get project --projectId blink-free -o json 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['id'])" 2>/dev/null || echo "blink-free")
+echo "    Project ID: ${PROJECT_ID}"
+
+# ---------------------------------------------------------------------------
+# 1. PostgreSQL Addon (Free Tier allows 1 addon)
+# ---------------------------------------------------------------------------
+echo "==> Creating PostgreSQL addon (Free)"
+northflank create addon --projectId "${PROJECT_ID}" -i '{
+  "name": "blink-db",
+  "type": "postgres",
+  "version": "15"
+}'
+
+echo "    Waiting for database to provision..."
+sleep 30
+
+# ---------------------------------------------------------------------------
+# 2. Combined Application Service
+# ---------------------------------------------------------------------------
+# To stay within the 2-service limit, we recommend merging components
+# or deploying only the essential Backend and Frontend.
+echo "==> Creating combined backend service (Blink-Core)"
+northflank create service combined --projectId "${PROJECT_ID}" -i '{
+  "name": "blink-core",
+  "billing": { "deploymentPlan": "nf-compute-free" },
+  "build": {
+    "docker": {
+      "dockerFilePath": "/engine/dockerfile",
+      "dockerWorkDir": "/engine"
+    }
+  },
+  "deployment": {
+    "instances": 1
+  },
+  "runtimeEnvironment": {}
+}'
+
+echo "==> Creating frontend service (Blink-UI)"
+northflank create service combined --projectId "${PROJECT_ID}" -i '{
+  "name": "blink-ui",
+  "billing": { "deploymentPlan": "nf-compute-free" },
+  "build": {
+    "docker": {
+      "dockerFilePath": "/user/blink/dockerfile",
+      "dockerWorkDir": "/"
+    }
+  },
+  "deployment": {
+    "instances": 1
+  },
+  "ports": [
+    {
+      "name": "frontend",
+      "internalPort": 80,
+      "protocol": "HTTP",
+      "public": true
+    }
+  ],
+  "runtimeEnvironment": {}
+}'
+
+echo ""
+echo "==> Deployment complete."
+echo "     deployed using the 'nf-compute-free' plan."
+echo "    Run 'northflank get project --projectId ${PROJECT_ID}' to check status."

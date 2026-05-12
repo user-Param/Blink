@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { ArrowUpRight, ChevronDown } from "lucide-react";
 
 type TradeNavbarProps = {
@@ -190,4 +190,4 @@ const TradeNavbar = ({ isConnected, marketData, sendMessage }: TradeNavbarProps)
   );
 };
 
-export default TradeNavbar;
+export default React.memo(TradeNavbar);

@@ -54,6 +54,7 @@ export const useOrderTracking = (marketPrice?: { symbol?: string; price?: number
   });
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectDelayRef = useRef(3000);
 
   // Connect to executor WebSocket
   useEffect(() => {
@@ -63,12 +64,13 @@ export const useOrderTracking = (marketPrice?: { symbol?: string; price?: number
           wsRef.current.close();
         }
 
-        const websocket = new WebSocket('ws://localhost:9001');
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "wss://blink-backend.onrender.com";
+        const websocket = new WebSocket(`${BACKEND_URL}/ws/executor`);
         wsRef.current = websocket;
 
         websocket.onopen = () => {
-          console.log('[OrderTracking] Connected to Executor');
           setIsConnected(true);
+          reconnectDelayRef.current = 3000; // Reset backoff on successful connect
         };
 
         websocket.onmessage = (event) => {
@@ -115,22 +117,23 @@ export const useOrderTracking = (marketPrice?: { symbol?: string; price?: number
               });
             }
           } catch (e) {
-            console.log('[OrderTracking] Message received:', event.data);
+            // Removed production log
           }
         };
 
-        websocket.onerror = (error) => {
-          console.error('[OrderTracking] WebSocket error:', error);
+        websocket.onerror = () => {
+          // Connection error — will retry via onclose backoff
         };
 
         websocket.onclose = () => {
-          console.log('[OrderTracking] Disconnected from Executor');
           setIsConnected(false);
           wsRef.current = null;
-          setTimeout(connectToExecutor, 3000);
+          // Reconnect with exponential backoff (3s → 6s → 12s → max 30s)
+          setTimeout(connectToExecutor, reconnectDelayRef.current);
+          reconnectDelayRef.current = Math.min(reconnectDelayRef.current * 2, 30000);
         };
-      } catch (error) {
-        console.error('[OrderTracking] Connection error:', error);
+      } catch {
+        // Connection failed — will retry via onclose backoff
       }
     };
 

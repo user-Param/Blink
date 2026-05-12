@@ -1,5 +1,5 @@
 // user/blink/src/components/trade/trade-controlpannel.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Wallet, Shield, Play, Square, Settings2, Info } from "lucide-react";
 
 type TradeControlPanelProps = {
@@ -185,4 +185,4 @@ const TradeControlPanel = ({ marketData, sendMessage }: TradeControlPanelProps) 
   );
 };
 
-export default TradeControlPanel;
+export default React.memo(TradeControlPanel);
