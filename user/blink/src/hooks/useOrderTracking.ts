@@ -64,7 +64,9 @@ export const useOrderTracking = (marketPrice?: { symbol?: string; price?: number
           wsRef.current.close();
         }
 
-        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "wss://blink-backend.onrender.com";
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === "localhost"
+    ? "ws://localhost:9001"
+    : "wss://blink-backend.onrender.com");;
         const websocket = new WebSocket(`${BACKEND_URL}/ws/executor`);
         wsRef.current = websocket;
 

@@ -8,7 +8,9 @@ interface UseWebSocketResult {
   marketData: { price?: number; bid?: number; ask?: number; symbol?: string; timestamp?: number } | null;
 }
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "wss://blink-backend.onrender.com";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === "localhost"
+    ? "ws://localhost:9000"
+    : "wss://blink-backend.onrender.com");
 
 export const useWebSocket = (path: string = "/ws/datafeed"): UseWebSocketResult => {
   const url = `${BACKEND_URL}${path}`;

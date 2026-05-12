@@ -29,13 +29,22 @@ const Docs = () => {
   };
 
   const sections = [
-    { id: "introduction", title: "Introduction", icon: Book },
-    { id: "getting-started", title: "Getting Started", icon: Play },
-    { id: "core-engine", title: "C++ Core Engine", icon: Cpu },
-    { id: "api-reference", title: "API Reference", icon: Terminal },
-    { id: "backtesting", title: "Backtesting Suite", icon: Database },
-    { id: "security", title: "Security & Risk", icon: Shield },
-  ];
+  { id: "introduction", title: "Introduction", icon: Book },
+  { id: "architecture", title: "Architecture", icon: Layers },
+  { id: "setup", title: "Setup & Installation", icon: Terminal },
+  { id: "deployment", title: "Deployment", icon: Zap },
+  { id: "core-engine", title: "C++ Core Engine", icon: Cpu },
+  { id: "strategy-sdk", title: "Strategy SDK", icon: Code },
+  { id: "api-reference", title: "API Reference", icon: Activity },
+  { id: "backtesting", title: "Backtesting Suite", icon: Database },
+  { id: "risk-system", title: "Risk System", icon: Shield },
+  { id: "research", title: "Research Infrastructure", icon: Book },
+  { id: "monitoring", title: "Monitoring & Logs", icon: Activity },
+  { id: "performance", title: "Performance", icon: Zap },
+  { id: "security", title: "Security & Risk", icon: Shield },
+  { id: "contributing", title: "Contributing", icon: Layers },
+];
+  
 
   const renderContent = () => {
     switch (activeSection) {
@@ -210,6 +219,257 @@ const Docs = () => {
                 Jump into the Getting Started guide and write your first
                 strategy in under 5 minutes.
               </p>
+            </div>
+          </div>
+        );
+      case "architecture":
+        return (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h1 className="text-6xl text-white tracking-tight">Architecture</h1>
+            
+            <div className="space-y-8">
+              <section className="space-y-4">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <Layers className="text-[#FF6D1F]" />
+                  Microservices Philosophy
+                </h2>
+                <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                  BLINK is engineered as a distributed system of specialized microservices. This decoupled approach ensures that high-latency operations (like exchange API calls) do not block performance-critical tasks (like strategy execution). Each service is containerized using Docker, allowing for independent scaling and easy deployment.
+                </p>
+              </section>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+                    <Zap className="text-blue-500" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Event-Driven Core</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">
+                    Communication between services happens via asynchronous WebSockets. The Datafeed Server acts as the central hub, broadcasting market updates to any number of subscribed Trading Engine instances. This Pub/Sub model minimizes coupling and maximizes throughput.
+                  </p>
+                </div>
+                <div className="bg-white/5 border border-white/10 p-8 rounded-3xl space-y-4">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FF6D1F]/10 flex items-center justify-center">
+                    <Shield className="text-[#FF6D1F]" size={24} />
+                  </div>
+                  <h3 className="text-xl font-bold text-white">Risk-First Execution</h3>
+                  <p className="text-white/40 text-sm leading-relaxed">
+                    Orders never go directly from the Strategy to the Exchange. Every signal must pass through the mandatory Risk Manager gatekeeper, which validates the order against pre-defined safety limits before forwarding it to the Order Executor.
+                  </p>
+                </div>
+              </div>
+
+              <section className="space-y-6">
+                <h2 className="text-3xl font-bold text-white">The Data Flow</h2>
+                <div className="relative space-y-4">
+                  {[
+                    {
+                      step: "1. Ingestion",
+                      desc: "The Datafeed Server connects to multiple venues (Binance, Coinbase, etc.) using low-latency WebSocket streams.",
+                      color: "bg-blue-500"
+                    },
+                    {
+                      step: "2. Normalization",
+                      desc: "Raw exchange data is normalized into the uniform BLINK MarketData format (JSON) and timestamped.",
+                      color: "bg-purple-500"
+                    },
+                    {
+                      step: "3. Broadcast",
+                      desc: "The normalized ticks are broadcast to the Trading Engine on specific symbol topics.",
+                      color: "bg-pink-500"
+                    },
+                    {
+                      step: "4. Execution",
+                      desc: "Strategies process the ticks. If a signal is generated, it's sent to the Risk Manager for final approval.",
+                      color: "bg-[#FF6D1F]"
+                    }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex gap-6 items-start group">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-3 h-3 rounded-full ${item.color} mt-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] group-hover:scale-125 transition-transform`}></div>
+                        {idx !== 3 && <div className="w-0.5 h-16 bg-white/5"></div>}
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-white font-bold">{item.step}</h4>
+                        <p className="text-white/40 text-sm">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <div className="bg-gradient-to-r from-[#FF6D1F]/10 to-transparent border-l-4 border-[#FF6D1F] p-8 rounded-r-3xl">
+                <h4 className="text-white font-bold mb-2 flex items-center gap-2">
+                  <Info size={18} className="text-[#FF6D1F]" />
+                  Service Discovery
+                </h4>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  Services discover each other using environment variables defined in the <code className="text-white">.env</code> file. Each service (Datafeed, Engine, Executor, Dadapter) exposes a specific port (9000, 8080, 9001, etc.) within the Docker network, allowing for seamless communication without hardcoded IP addresses.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case "setup":
+        return (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h1 className="text-6xl text-white tracking-tight">Setup</h1>
+            
+            <div className="space-y-8">
+              <section className="space-y-4">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <Terminal className="text-[#FF6D1F]" />
+                  Prerequisites
+                </h2>
+                <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                  Before you start building with BLINK, ensure you have the following tools installed on your development machine.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  {[
+                    { title: "Docker & Docker Compose", desc: "Mandatory for running the microservices environment.", icon: Layers },
+                    { title: "Node.js (v18+)", desc: "Required for the React frontend and development tools.", icon: Code },
+                    { title: "C++ Toolchain", desc: "GCC 11+ or Clang 14+ for compiling the Core Engine.", icon: Cpu },
+                    { title: "Python 3.10+", desc: "Required for the Research Infrastructure and Strategy SDK.", icon: Activity },
+                  ].map((item, idx) => (
+                    <div key={idx} className="bg-white/5 border border-white/10 p-6 rounded-2xl flex gap-4">
+                      <div className="mt-1 shrink-0">
+                        <item.icon size={20} className="text-[#FF6D1F]" />
+                      </div>
+                      <div>
+                        <h4 className="text-white font-bold text-sm">{item.title}</h4>
+                        <p className="text-white/40 text-xs leading-relaxed mt-1">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="space-y-6">
+                <h2 className="text-3xl font-bold text-white">Environment Configuration</h2>
+                <p className="text-white/60 text-lg leading-relaxed">
+                  BLINK uses a single <code className="text-white">.env</code> file in the root directory to manage secrets and service endpoints.
+                </p>
+                <div className="bg-black/50 p-6 rounded-2xl border border-white/5 space-y-4 font-mono text-xs">
+                  <div className="flex justify-between items-center mb-2 border-b border-white/5 pb-2">
+                    <span className="text-white/40">.env example</span>
+                    <button onClick={() => copyToClipboard("BINANCE_API_KEY=your_key\nBINANCE_API_SECRET=your_secret\nDB_USER=blink\nDB_PASSWORD=blink_pass", "env-copy")} className="text-[#FF6D1F] hover:text-white transition-colors">
+                      {copiedId === "env-copy" ? <Check size={14} /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                  <code className="text-blue-400 block">BINANCE_API_KEY=<span className="text-white/20">your_api_key_here</span></code>
+                  <code className="text-blue-400 block">BINANCE_API_SECRET=<span className="text-white/20">your_api_secret_here</span></code>
+                  <code className="text-blue-400 block">POSTGRES_DB=blink</code>
+                  <code className="text-blue-400 block">POSTGRES_USER=blink</code>
+                  <code className="text-blue-400 block">POSTGRES_PASSWORD=blink</code>
+                </div>
+                <div className="bg-yellow-500/10 border border-yellow-500/20 p-6 rounded-2xl flex gap-4">
+                  <AlertCircle className="text-yellow-500 shrink-0" size={20} />
+                  <p className="text-white/60 text-sm">
+                    <span className="text-yellow-500 font-bold">Security Note:</span> Never commit your <code className="text-white">.env</code> file to source control. It is already included in the <code className="text-white">.gitignore</code> by default.
+                  </p>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h2 className="text-3xl font-bold text-white">Quick Start Command</h2>
+                <p className="text-white/60 text-lg leading-relaxed">
+                  Once your environment is configured, you can launch the entire stack with a single command:
+                </p>
+                <div className="bg-black/80 p-4 rounded-xl border border-[#FF6D1F]/30 flex justify-between items-center group">
+                  <code className="text-white font-mono text-sm">docker-compose up --build</code>
+                  <Play size={16} className="text-[#FF6D1F] opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </section>
+            </div>
+          </div>
+        );
+      case "deployment":
+        return (
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h1 className="text-6xl text-white tracking-tight">Deployment</h1>
+            
+            <div className="space-y-8">
+              <section className="space-y-4">
+                <h2 className="text-3xl font-bold text-white flex items-center gap-3">
+                  <Zap className="text-[#FF6D1F]" />
+                  Production Ready
+                </h2>
+                <p className="text-white/60 text-lg leading-relaxed max-w-4xl">
+                  Deploying BLINK to production involves moving from a development-heavy setup to an optimized, resilient execution environment. We recommend using a high-performance VPS or dedicated server with low latency to your target exchange's data centers.
+                </p>
+              </section>
+
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold text-white">Deployment Strategies</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { 
+                      title: "Standard Docker", 
+                      desc: "Deploy using the provided docker-compose.yml. Ideal for single-node setups.",
+                      badge: "Recommended" 
+                    },
+                    { 
+                      title: "Bare Metal", 
+                      desc: "Compile all C++ services locally for maximum performance. Best for ultra-low latency requirements.",
+                      badge: "Advanced" 
+                    },
+                    { 
+                      title: "Cloud Native", 
+                      desc: "Leverage Kubernetes (K8s) for automatic scaling and high availability of the datafeed service.",
+                      badge: "Enterprise" 
+                    },
+                  ].map((strategy, idx) => (
+                    <div key={idx} className="bg-white/5 border border-white/10 p-6 rounded-3xl space-y-3 relative overflow-hidden group">
+                      <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-widest text-[#FF6D1F]/60 bg-[#FF6D1F]/5 px-2 py-1 rounded">
+                        {strategy.badge}
+                      </span>
+                      <h4 className="text-white font-bold">{strategy.title}</h4>
+                      <p className="text-white/40 text-xs leading-relaxed">{strategy.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <section className="bg-blue-500/5 border border-blue-500/10 p-8 rounded-3xl space-y-6">
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
+                  <Shield size={24} className="text-blue-400" />
+                  Hardening Your Instance
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { t: "Isolate WebSockets", d: "Ensure ports 9000 and 9001 are blocked by your firewall and only accessible via the local Docker network or a secure VPN." },
+                    { t: "Resource Limits", d: "Configure Docker resource limits (memory and CPU) for the Research Executor to prevent Python scripts from starving the Core Engine." },
+                    { t: "Log Rotation", d: "Enable production log rotation to prevent disk space exhaustion from high-frequency tick data logs." }
+                  ].map((item, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0"></div>
+                      <div className="space-y-1">
+                        <p className="text-white font-bold text-sm">{item.t}</p>
+                        <p className="text-white/40 text-xs leading-relaxed">{item.d}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <div className="bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-white/10 p-8 rounded-3xl">
+                <h4 className="text-white font-bold mb-4">Post-Deployment Checklist</h4>
+                <div className="space-y-3">
+                  {[
+                    "Verify connectivity to Datafeed Server from Engine.",
+                    "Test Risk Manager order rejection logic with invalid signals.",
+                    "Confirm Order Executor successfully signs requests with production keys.",
+                    "Monitor Engine CPU usage during high-volatility periods."
+                  ].map((check, idx) => (
+                    <div key={idx} className="flex items-center gap-3 text-white/40 text-sm">
+                      <div className="w-4 h-4 rounded border border-white/10 flex items-center justify-center shrink-0">
+                        <Check size={10} className="text-green-500" />
+                      </div>
+                      {check}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         );
