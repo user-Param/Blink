@@ -2,11 +2,6 @@ cmake_minimum_required(VERSION 3.10)
 project(datafeed)
 
 set(CMAKE_CXX_STANDARD 17)
-if(POLICY CMP0167)
-    cmake_policy(SET CMP0167 NEW)
-endif()
-
-list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
 
 # Find packages
 find_package(Boost 1.74 REQUIRED COMPONENTS
@@ -19,29 +14,20 @@ find_package(OpenSSL REQUIRED)
 find_package(Threads REQUIRED)
 find_package(nlohmann_json REQUIRED)
 
-# Find libpqxx
-find_library(PQXX_LIB pqxx PATHS /opt/homebrew/lib /usr/local/lib /usr/lib)
-find_path(PQXX_INCLUDE_DIR pqxx/pqxx PATHS /opt/homebrew/include /usr/local/include /usr/include)
+# Standard discovery for PostgreSQL
+find_package(PostgreSQL REQUIRED)
 
-# Find libpq (required by libpqxx)
-find_library(PQ_LIB pq PATHS /opt/homebrew/opt/libpq/lib /opt/homebrew/lib /usr/local/lib /usr/lib)
-find_path(PQ_INCLUDE_DIR libpq-fe.h PATHS /opt/homebrew/opt/libpq/include /opt/homebrew/include /usr/local/include /usr/include)
+# Discovery for libpqxx
+find_library(PQXX_LIB pqxx)
+find_path(PQXX_INCLUDE_DIR pqxx/pqxx)
 
-# Error if not found
-if(NOT PQXX_LIB)
-    message(FATAL_ERROR "libpqxx not found. Please install it: brew install libpqxx")
+if(NOT PQXX_LIB OR NOT PQXX_INCLUDE_DIR)
+    message(FATAL_ERROR "libpqxx not found. Please install libpqxx-dev (Ubuntu) or libpqxx (macOS)")
 endif()
-if(NOT PQXX_INCLUDE_DIR)
-    message(FATAL_ERROR "libpqxx headers not found. Please install it: brew install libpqxx")
-endif()
-if(NOT PQ_LIB)
-    message(FATAL_ERROR "libpq not found. Please install it: brew install libpq")
-endif()
-
-include_directories(/opt/homebrew/include)
 
 include_directories(
-    /opt/homebrew/include
+    ${PostgreSQL_INCLUDE_DIRS}
+    ${PQXX_INCLUDE_DIR}
     ${CMAKE_SOURCE_DIR}/../broker/include
 )
 
@@ -68,6 +54,7 @@ target_link_libraries(datafeed
     OpenSSL::SSL
     OpenSSL::Crypto
     Threads::Threads
+    PostgreSQL::PostgreSQL
 )
 
 target_link_libraries(dadapter 
@@ -77,7 +64,7 @@ target_link_libraries(dadapter
     OpenSSL::Crypto
     Threads::Threads
     ${PQXX_LIB}
-    ${PQ_LIB}
+    PostgreSQL::PostgreSQL
 )
 
 target_include_directories(datafeed PRIVATE 
@@ -89,6 +76,4 @@ target_include_directories(datafeed PRIVATE
 target_include_directories(dadapter PRIVATE 
     ${Boost_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}
-    ${PQXX_INCLUDE_DIR}
-    ${PQ_INCLUDE_DIR}
     )
