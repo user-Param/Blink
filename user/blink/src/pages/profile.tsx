@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 export const Profile = () => {
+  const [showOverlay, setShowOverlay] = useState(true);
   // Hardcoded profile data
   const profile = {
     username: "Alex Quant",
@@ -36,6 +37,7 @@ export const Profile = () => {
   ];
 
   return (
+    <div className="relative h-full overflow-y-auto text-white p-8">
     <div className="h-full overflow-y-auto  text-white p-8">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* ---------- Profile Header ---------- */}
@@ -168,6 +170,15 @@ export const Profile = () => {
           </div>
         </div>
       </div>
+    </div>
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="max-w-md w-full mx-4 bg-[#0f0f0f] border border-white/10 shadow-2xl p-6 text-center">
+        <h2 className="text-2xl font-bold text-white mb-2">Profile</h2>
+        <p className="text-white/60">
+          The Profile page is the central hub for users to manage their algorithmic trading identity, monitor performance, and configure platform settings.
+        </p>
+      </div>
+    </div>
     </div>
   );
 };

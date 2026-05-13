@@ -210,6 +210,7 @@ const Social = () => {
   const [activeTab, setActiveTab] = useState("Home");
 
   return (
+    
     <div className="h-full overflow-y-auto text-white">
       {/* Tabs / Top Navigation */}
       <div className="flex items-center gap-1 px-6 py-4 border-b border-white/10 bg-[#111] sticky top-0 z-20">
@@ -286,6 +287,16 @@ const Social = () => {
               </button>
             </div>
           ))}
+        </div>
+      </div>
+      <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="relative z-40 max-w-md w-full mx-4 bg-[#0f0f0f] border border-white/20 rounded-2xl shadow-2xl p-6 text-center">
+          <h2 className="text-2xl font-bold text-white mb-2">Social</h2>
+          <p className="text-white/70">
+Explore community strategies, deploy them instantly, track live results, and learn together via comments and leaderboards.
+
+
+          </p>
         </div>
       </div>
     </div>
