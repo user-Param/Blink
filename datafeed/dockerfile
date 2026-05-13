@@ -1,0 +1,73 @@
+# Build stage
+FROM ubuntu:22.04 AS build
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    cmake \
+    g++ \
+    libboost-all-dev \
+    libssl-dev \
+    libpq-dev \
+    libpqxx-dev \
+    nlohmann-json3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+# Copy necessary source directories for the build
+# Build context is expected to be the project root
+COPY datafeed ./datafeed
+COPY broker ./broker
+COPY database ./database
+
+WORKDIR /app/datafeed
+
+# Fix CMakeLists.txt for Linux environment
+# 1. Don't delete lines, just replace Homebrew paths with standard Linux paths
+# 2. Fix nlohmann_json target usage (it should be in link libraries, not include directories)
+RUN sed -i 's|/opt/homebrew/include|/usr/include|g' CMakeLists.txt && \
+    sed -i 's|/opt/homebrew/lib|/usr/lib/x86_64-linux-gnu|g' CMakeLists.txt && \
+    sed -i 's|/opt/homebrew/opt/libpq/include|/usr/include/postgresql|g' CMakeLists.txt && \
+    sed -i 's|/opt/homebrew/opt/libpq/lib|/usr/lib/x86_64-linux-gnu|g' CMakeLists.txt && \
+    sed -i 's|nlohmann_json::nlohmann_json|${nlohmann_json_INCLUDE_DIRS}|g' CMakeLists.txt && \
+    sed -i 's|Threads::Threads|Threads::Threads\n    nlohmann_json::nlohmann_json|g' CMakeLists.txt
+
+# Inject Render environment variables into Dadapter.h (deployment fix)
+RUN sed -i 's|std::string db_config_ = "host=localhost port=5432 dbname=blink user=blink password=";|std::string db_config_ = "host=" + std::string(std::getenv("DB_HOST") ? std::getenv("DB_HOST") : "localhost") + " port=" + std::string(std::getenv("DB_PORT") ? std::getenv("DB_PORT") : "5432") + " dbname=" + std::string(std::getenv("DB_NAME") ? std::getenv("DB_NAME") : "blink") + " user=" + std::string(std::getenv("DB_USER") ? std::getenv("DB_USER") : "blink") + " password=" + std::string(std::getenv("DB_PASSWORD") ? std::getenv("DB_PASSWORD") : "");|' ../database/Dadapter.h
+
+# Create build directory and compile
+# Pass PQ_INCLUDE_DIR explicitly as libpq-dev on Ubuntu puts headers in a nested dir
+RUN rm -rf build && mkdir -p build && cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release \
+          -DPQ_INCLUDE_DIR=/usr/include/postgresql \
+          .. && \
+    make -j$(nproc)
+
+# Runtime stage
+FROM ubuntu:22.04
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install only the necessary runtime libraries
+RUN apt-get update && apt-get install -y \
+    libboost-thread1.74.0 \
+    libboost-chrono1.74.0 \
+    libboost-date-time1.74.0 \
+    libboost-atomic1.74.0 \
+    libssl3 \
+    libpq5 \
+    libpqxx-6.4 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app/datafeed
+# Copy the compiled binaries from the build stage
+COPY --from=build /app/datafeed/build/datafeed .
+COPY --from=build /app/datafeed/build/dadapter .
+
+# Expose the datafeed port
+EXPOSE 9000
+
+# Start the datafeed server
+CMD ["./datafeed", "0.0.0.0", "9000", "4"]
