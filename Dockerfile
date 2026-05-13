@@ -8,9 +8,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 COPY . .
 
-# Build Datafeed
-RUN cd datafeed && mkdir -p build && cd build && cmake .. && make
-
 # Build Broker
 RUN cd broker && mkdir -p build && cd build && cmake .. && make
 
@@ -31,7 +28,6 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-COPY --from=build /app/datafeed/build/datafeed ./datafeed/datafeed
 COPY --from=build /app/broker/build/eadapter ./broker/eadapter
 COPY --from=build /app/executor/build/executor ./executor/executor
 COPY --from=build /app/engine/build/engine ./engine/engine

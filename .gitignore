@@ -27,7 +27,7 @@ logs/
 data/logs/
 
 # Binaries
-datafeed
+
 advanced-server
 *.dSYM/
 
