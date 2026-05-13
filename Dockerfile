@@ -11,7 +11,7 @@ COPY . .
 # Build Datafeed
 RUN cd datafeed && mkdir -p build && cd build && cmake .. && make
 
-# Build Broker (produces eadapter)
+# Build Broker
 RUN cd broker && mkdir -p build && cd build && cmake .. && make
 
 # Build Executor
@@ -31,13 +31,11 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Copy binaries – note the correct names
 COPY --from=build /app/datafeed/build/datafeed ./datafeed/datafeed
 COPY --from=build /app/broker/build/eadapter ./broker/eadapter
 COPY --from=build /app/executor/build/executor ./executor/executor
 COPY --from=build /app/engine/build/engine ./engine/engine
 
-# Copy configs
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 
