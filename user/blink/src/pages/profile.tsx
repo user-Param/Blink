@@ -44,7 +44,7 @@ export const Profile = () => {
           <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
             {/* Avatar */}
             <div className="relative">
-              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-[#FF6D1F]/30 to-[#FF6D1F]/10 flex items-center justify-center border-2 border-[#FF6D1F]/40 shadow-lg shadow-[#FF6D1F]/10">
+              <div className="w-28 h-28 rounded-full  from-[#FF6D1F]/30 to-[#FF6D1F]/10 flex items-center justify-center border-2 border-[#FF6D1F]/40 shadow-lg shadow-[#FF6D1F]/10">
                 <User size={56} className="text-[#FF6D1F]" />
               </div>
               <div className="absolute -bottom-1 -right-1 w-7 h-7 bg-green-500 border-4 border-[#141414] rounded-full shadow-sm" />
