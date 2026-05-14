@@ -128,7 +128,7 @@ const AIPrompt = () => {
   const fullPrompt = SYSTEM_PROMPT.replace('{{MODE_CONTEXT}}', modeInstructions) + prompt;
 
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent(fullPrompt);
       const text = result.response.text();
       setResponse(text);

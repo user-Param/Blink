@@ -20,7 +20,7 @@ app = Flask(__name__)
 CORS(app)
 
 # Strategy storage directory - relative to this script
-STRATEGY_DIR = Path(__file__).parent.absolute() / "engine" / "algos"
+STRATEGY_DIR = Path(__file__).parent.absolute() / "algos"
 STRATEGY_DIR.mkdir(parents=True, exist_ok=True)
 
 @app.route('/validate', methods=['POST'])

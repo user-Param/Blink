@@ -8,7 +8,10 @@ import { Shield, AlertCircle, X, CheckCircle2, Play } from "lucide-react";
 import AIPrompt from "../components/ai/ai";
 
 const BACKEND_URL =
-  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
+  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || 
+  (window.location.hostname === "localhost" 
+    ? "http://localhost:5001" 
+    : "https://blink-1-6xql.onrender.com/api/research");
 
 const Editor = () => {
   const { isConnected, marketData, subscribe, sendMessage } = useWebSocket();
