@@ -42,7 +42,10 @@ void Dadapter::connect_to_server() {
 
 bool Dadapter::connect_to_db() {
     try {
-        db_conn_ = std::make_unique<pqxx::connection>(db_config_);
+        const char* db_url = std::getenv("DATABASE_URL");
+        std::string conn_str = db_url ? db_url : db_config_;
+        
+        db_conn_ = std::make_unique<pqxx::connection>(conn_str);
         if (db_conn_->is_open()) {
             std::cout << "[PostgreSQL] Connected to database: " << db_conn_->dbname() << std::endl;
             return true;

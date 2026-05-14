@@ -1,6 +1,22 @@
 services:
   - type: web
     name: blink-backend
-    runtime: image
-    dockerCompose: docker-compose.yml
+    runtime: docker
     plan: free
+    region: ohio
+    envVars:
+      - key: PORT
+        value: 80
+      - key: DATABASE_URL
+        fromDatabase:
+          name: blink-db
+          property: connectionString
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONPATH
+        value: "/app:/app/engine:/app/algos"
+
+databases:
+  - name: blink-db
+    plan: free
+    region: ohio
