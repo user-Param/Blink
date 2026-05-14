@@ -10,7 +10,7 @@ interface UseWebSocketResult {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || (window.location.hostname === "localhost"
     ? "ws://localhost:9000"
-    : "wss://blink-backend.onrender.com");
+    : "https://blink-1-6xql.onrender.com/");
 
 export const useWebSocket = (path: string = "/ws/datafeed"): UseWebSocketResult => {
   const url = `${BACKEND_URL}${path}`;
