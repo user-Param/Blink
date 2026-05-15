@@ -32,6 +32,16 @@ void AlgoManager::activateAlgo(size_t index, bool active) {
     }
 }
 
+void AlgoManager::activateOnly(const std::string& strategy_id) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    for (auto& instance : algos_) {
+        instance.active = (instance.strategy_id == strategy_id);
+        if (instance.active) {
+            std::cout << "[AlgoManager] Isolated strategy for backtesting: " << strategy_id << std::endl;
+        }
+    }
+}
+
 void AlgoManager::onTick(const MarketData& data) {
     {
         static int check_counter = 0;

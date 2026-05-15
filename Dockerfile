@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y \
     libpython3.10 python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install flask flask-cors
+# Install Research Backend Dependencies (Data Science Stack)
+RUN pip3 install flask flask-cors numpy pandas matplotlib scikit-learn
 
 WORKDIR /app
 

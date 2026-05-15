@@ -116,15 +116,13 @@ void Engine::onData(const std::string &raw)
     try
     {
         auto j = nlohmann::json::parse(raw);
-        if (j.contains("type") && j["type"] == "backtest_result") return;
-        if (j.contains("topic") && j["topic"] == "backtest_complete") {
-            finalizeBacktest();
-            return;
-        }
-        if (j.contains("topic") && j["topic"].get<std::string>().find("backtest_") != std::string::npos) {
-            if (!is_backtesting_) {
+        
+        // Handle Mode Switching
+        if (j.contains("mode")) {
+            std::string mode = j["mode"];
+            if (mode == "_Backtest") {
                 is_backtesting_ = true;
-                bt_capital_ = current_bt_capital_;
+                bt_capital_ = j.value("capital", 10000.0);
                 bt_equity_ = bt_capital_;
                 bt_max_equity_ = bt_capital_;
                 bt_max_drawdown_ = 0.0;
@@ -132,7 +130,26 @@ void Engine::onData(const std::string &raw)
                 bt_returns_.clear();
                 bt_tick_count_ = 0;
                 bt_last_price_ = 0.0;
+                
+                if (j.contains("strategy_id")) {
+                    algoManager_->activateOnly(j["strategy_id"]);
+                }
+                std::cout << "[Engine] Switching to Backtest mode (Capital: " << bt_capital_ << ")" << std::endl;
+            } else if (mode == "_Live") {
+                is_backtesting_ = false;
+                std::cout << "[Engine] Switching to Live mode" << std::endl;
             }
+            return;
+        }
+
+        if (j.contains("type") && j["type"] == "backtest_result") return;
+        
+        if (j.contains("topic") && j["topic"] == "backtest_complete") {
+            finalizeBacktest();
+            return;
+        }
+        
+        if (j.contains("topic") && j["topic"].get<std::string>().find("backtest_") != std::string::npos) {
             MarketData data;
             data.symbol = j["symbol"];
             data.price = j["price"];
@@ -146,6 +163,7 @@ void Engine::onData(const std::string &raw)
             algoManager_->onTick(data);
             return;
         }
+        
         MarketData data;
         data.symbol = j["symbol"];
         data.price = j["price"];
@@ -221,6 +239,5 @@ void Engine::sendMode(const std::string &mode) {
 }
 
 void Engine::handleCommand(const std::string& raw) {
-    auto j = nlohmann::json::parse(raw);
-    if (j.contains("mode") && j["mode"] == "_Backtest") current_bt_capital_ = j.value("capital", 10000.0);
+    // This is now integrated into onData
 }
