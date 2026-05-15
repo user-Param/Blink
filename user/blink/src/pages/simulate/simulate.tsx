@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import { Plus, X, Upload, Play, Database, FileText, Activity, TrendingUp, TrendingDown, BarChart3, Download } from "lucide-react";
 import SimulateCard from "./simulate-card";
 import { useWebSocket } from "../../hooks/useWebSocket";
-import { calculateSimulationResults } from "./simulation-results";
-
 
 type Dataset = {
     id: string;
@@ -23,171 +21,10 @@ type Strategy = {
 };
 
 const BACKEND_URL =
-    (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || "http://localhost:5001";
-
-
-export const calculateSimulationResults = ({
-  candles,
-  strategy,
-  capital = 10000,
-}: {
-  candles: any[];
-  strategy: string;
-  capital?: number;
-}) => {
-  if (!candles || candles.length < 2) return null;
-
-  let balance = capital;
-  let peakBalance = capital;
-
-  let trades = 0;
-  let wins = 0;
-  let losses = 0;
-
-  let maxDrawdown = 0;
-
-  let totalProfit = 0;
-  let totalLoss = 0;
-
-  let position: null | {
-    entry: number;
-    side: "LONG" | "SHORT";
-  } = null;
-
-  const closedTrades: number[] = [];
-
-  for (let i = 1; i < candles.length; i++) {
-    const current = candles[i];
-    const previous = candles[i - 1];
-
-    const currentPrice = Number(current.close);
-    const previousPrice = Number(previous.close);
-
-    // SIMPLE STRATEGY LOGIC
-    let signal: "BUY" | "SELL" | null = null;
-
-    if (strategy.toLowerCase().includes("trend")) {
-      signal = currentPrice > previousPrice ? "BUY" : "SELL";
-    } else if (strategy.toLowerCase().includes("mean")) {
-      signal = currentPrice < previousPrice ? "BUY" : "SELL";
-    } else {
-      signal = currentPrice > previousPrice ? "BUY" : "SELL";
-    }
-
-    // OPEN POSITION
-    if (!position) {
-      position = {
-        entry: currentPrice,
-        side: signal === "BUY" ? "LONG" : "SHORT",
-      };
-
-      continue;
-    }
-
-    // CLOSE POSITION
-    let pnl = 0;
-
-    if (position.side === "LONG") {
-      pnl = currentPrice - position.entry;
-    } else {
-      pnl = position.entry - currentPrice;
-    }
-
-    balance += pnl;
-
-    closedTrades.push(pnl);
-
-    trades++;
-
-    if (pnl > 0) {
-      wins++;
-      totalProfit += pnl;
-    } else {
-      losses++;
-      totalLoss += Math.abs(pnl);
-    }
-
-    if (balance > peakBalance) {
-      peakBalance = balance;
-    }
-
-    const drawdown =
-      ((peakBalance - balance) / peakBalance) * 100;
-
-    if (drawdown > maxDrawdown) {
-      maxDrawdown = drawdown;
-    }
-
-    position = null;
-  }
-
-  const totalPnL = balance - capital;
-
-  const winRate =
-    trades > 0 ? (wins / trades) * 100 : 0;
-
-  const returns =
-    closedTrades.length > 0
-      ? closedTrades.reduce((a, b) => a + b, 0) /
-        closedTrades.length
-      : 0;
-
-  const sharpeRatio =
-    returns !== 0 ? totalPnL / returns : 0;
-
-  const profitFactor =
-    totalLoss > 0 ? totalProfit / totalLoss : 0;
-
-  const results = {
-    totalReturn:
-      ((totalPnL / capital) * 100).toFixed(2) + "%",
-
-    totalPnL: "$" + totalPnL.toFixed(2),
-
-    maxDrawdown: maxDrawdown.toFixed(2) + "%",
-
-    sharpeRatio: sharpeRatio.toFixed(2),
-
-    winRate: winRate.toFixed(2) + "%",
-
-    profitFactor: profitFactor.toFixed(2),
-
-    totalTrades: trades.toString(),
-
-    winningTrades: wins.toString(),
-
-    losingTrades: losses.toString(),
-
-    avgWin:
-      "$" +
-      (
-        wins > 0 ? totalProfit / wins : 0
-      ).toFixed(2),
-
-    avgLoss:
-      "$" +
-      (
-        losses > 0 ? totalLoss / losses : 0
-      ).toFixed(2),
-
-    maxProfit:
-      "$" +
-      Math.max(...closedTrades, 0).toFixed(2),
-
-    maxLoss:
-      "$" +
-      Math.abs(Math.min(...closedTrades, 0)).toFixed(2),
-
-    totalFees:
-      "$" + (trades * 0.1).toFixed(2),
-
-    finalEquity: "$" + balance.toFixed(2),
-  };
-
-  console.table(results);
-
-  return results;
-};
+  (import.meta as any).env?.VITE_RESEARCH_BACKEND_URL || 
+  (window.location.hostname === "localhost" 
+    ? "http://localhost:5001" 
+    : "https://blink-1-6xql.onrender.com/api/research");
 
 const Simulate = () => {
     const { isConnected, sendMessage, subscribe, lastMessage } = useWebSocket();
@@ -293,49 +130,9 @@ const Simulate = () => {
                 setIsBacktestRunning(false);
             } 
             else if (msg.topic === "backtest_complete") {
-    setTimeout(() => {
-        setIsBacktestRunning(prev => {
-            if (prev) {
-                // Generate random backtest results
-                const pnl = Math.round((Math.random() * 2 - 1) * initialCapital * 100) / 100; // between -100% and +100% of capital
-                const finalEquity = initialCapital + pnl;
-                const totalReturn = ((pnl / initialCapital) * 100).toFixed(2) + '%';
-                const drawdown = (Math.random() * 15).toFixed(2) + '%'; // 0 – 15%
-                const sharpe = (Math.random() * 3 + 0.5).toFixed(2); // 0.5 – 3.5
-                const winRate = (Math.random() * 30 + 50).toFixed(1) + '%'; // 50% – 80%
-                const profitFactor = (Math.random() * 1.5 + 1).toFixed(2); // 1.0 – 2.5
-                const totalTrades = Math.floor(Math.random() * 80 + 20); // 20 – 100
-                const winningTrades = Math.floor(totalTrades * (parseFloat(winRate) / 100));
-                const losingTrades = totalTrades - winningTrades;
-                const avgWin = winningTrades > 0 ? '$' + ((pnl > 0 ? pnl / winningTrades : Math.random() * 200)).toFixed(2) : '$0.00';
-                const avgLoss = losingTrades > 0 ? '$' + ((pnl < 0 ? Math.abs(pnl) / losingTrades : Math.random() * 150)).toFixed(2) : '$0.00';
-                const maxProfit = '$' + (Math.random() * 500 + 100).toFixed(2);
-                const maxLoss = '$' + (Math.random() * 300 + 50).toFixed(2);
-                const totalFees = '$' + (Math.random() * 30 + 5).toFixed(2);
-
-                setBacktestResults({
-                    totalReturn,
-                    totalPnL: '$' + pnl.toFixed(2),
-                    maxDrawdown: drawdown,
-                    sharpeRatio: sharpe,
-                    winRate,
-                    profitFactor,
-                    totalTrades: totalTrades.toString(),
-                    winningTrades: winningTrades.toString(),
-                    losingTrades: losingTrades.toString(),
-                    avgWin,
-                    avgLoss,
-                    maxProfit,
-                    maxLoss,
-                    totalFees,
-                    finalEquity: '$' + finalEquity.toFixed(2)
-                });
-                return false;
+                // The engine will send a backtest_result message shortly after this.
+                // We keep the loading state until backtest_result is received.
             }
-            return prev;
-        });
-    }, 1000);
-}
         } catch {
             
         }
